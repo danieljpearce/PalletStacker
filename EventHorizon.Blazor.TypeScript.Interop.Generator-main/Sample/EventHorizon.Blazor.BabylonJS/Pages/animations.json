@@ -1,0 +1,1 @@
+{"animations":[{"name":"ySlide","property":"position","framePerSecond":60,"dataType":1,"loopBehavior":1,"blendingSpeed":0.01,"keys":[{"frame":0,"values":[0,2.49637397939114,0,[0,0,0],[0,0,0]]},{"frame":101.20038138362183,"values":[0.003325826007635321,0.0038935445822131107,-3.7338704029447195e-7,[0,0,0],[0,0,0]]}],"ranges":[]}]}

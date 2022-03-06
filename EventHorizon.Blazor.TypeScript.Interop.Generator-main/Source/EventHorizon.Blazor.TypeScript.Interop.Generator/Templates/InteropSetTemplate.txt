@@ -1,0 +1,5 @@
+                EventHorizonBlazorInterop.Set(
+                    [[ROOT]],
+                    "[[PROPERTY]]",
+                    value
+                );
