@@ -1,8 +1,0 @@
-        public [[CLASS_NAME]][[INTERFACE_POSTFIX]]() : base() { } 
-
-        public [[CLASS_NAME]][[INTERFACE_POSTFIX]](
-            ICachedEntity entity
-        ) : base(entity)
-        {
-            ___guid = entity.___guid;
-        }
