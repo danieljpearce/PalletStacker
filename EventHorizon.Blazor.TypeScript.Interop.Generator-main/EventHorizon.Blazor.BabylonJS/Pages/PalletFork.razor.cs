@@ -140,10 +140,10 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                             }));
                         });
                         animate.Start();
-                        while (animH > palSelfH + (boxH / 2))
-                        { 
-                            Task.WaitAny(animate);
-                        }
+                           
+                        //Task.WaitAny(animate);
+                        await Task.Delay(1000);
+                       
                         
                     }
                 }
