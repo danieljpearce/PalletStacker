@@ -1,5 +1,0 @@
-        [[CACHE_SECTION]]
-        public [[STATIC]]async ValueTask<[[TYPE]]> get_[[NAME]]()
-        {
-[[PROPERTY_GETTER]]
-        }

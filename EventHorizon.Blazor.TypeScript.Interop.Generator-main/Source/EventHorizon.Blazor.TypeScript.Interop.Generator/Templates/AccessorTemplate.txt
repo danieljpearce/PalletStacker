@@ -1,8 +1,0 @@
-        [[CACHE_SECTION]]
-        public [[STATIC]][[TYPE]] [[NAME]]
-        {
-            get
-            {
-[[PROPERTY_GETTER]]
-            }
-        }

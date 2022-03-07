@@ -1,5 +1,0 @@
-            if(__[[CACHE_NAME]] == null)
-            {
-                __[[CACHE_NAME]] = await [[RETURN_TYPE_CONTENT]];
-            }
-            return __[[CACHE_NAME]];
