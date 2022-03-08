@@ -60,8 +60,8 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 scene
             )).ToEntity<SceneLoaderImportMeshEntity>();
             palletModel.meshes[0].name = "pallet";
-            decimal palW = 1.2m, palD = 1m, palH = 1m, palSelfH = .16m;
-
+            decimal palW = 1.2m, palD = 1m, palH = 1m, palSelfH = .16m;//Pallet dimensions
+            decimal boxW = 0.1m, boxD = 0.2m, boxH = 0.3m; //Box dimensions
             //add an arcRotateCamera to the scene
             var camera = new ArcRotateCamera(
                 "camera",
@@ -86,127 +86,160 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             var light = new HemisphericLight("ambientLight", new Vector3(0, 10, 0), scene);
             var frameRate = 10;
 
-            decimal boxW = 0.1m, boxD = 0.2m, boxH = 0.3m; //box dimensions
+          
             bool flip = false;
             //palH = boxH; //temporary
             engine.runRenderLoop(new ActionCallback(
                 () => Task.Run(() => _scene.render(true, false))
             ));
-            
-            
 
+
+
+            //initialize 3D array with dimensions derived from box size
+            Mesh[,,] boxArray = new Mesh[Convert.ToInt32(palH / boxH),Convert.ToInt32(palW / boxW),Convert.ToInt32(palD / boxD)];
+            int xIter = -1;
+            int zIter = -1;
+            int yIter = -1;
             //nested loops to draw and position boxes 
-
-            for (decimal y = palSelfH; y < palH; y += boxH)
+            for (decimal y = palSelfH; y < palH; y += boxH)//3
             {
-                for (decimal z = 0; z < palD; z += boxD)
+            yIter++;
+                zIter = -1;
+                for (decimal z = 0; z < palD; z += boxD)//5
                 {
-                    for (decimal x = 0; x < palW; x += boxW)
-                    {
+                zIter++;
+                    xIter = -1;
+                    for (decimal x = 0; x < palW; x += boxW)//12
+                        {
+                        xIter++;
                         //var alpha = flip ? 0.5m : 1m;     idk what this does , like why is alpha not just 1 value?
                         //flip = !flip;
                         var red = new Color4(1, 0, 0, 1);
                         var blue = new Color4(0, 0, 1, 1);
-                        var green = new Color4(0, 1, 0, 1);
-                        Mesh box = MeshBuilder.CreateBox("box",
+                        var green = new Color4(0, 1, 0, 1);     
+                        boxArray[yIter, xIter, zIter] = MeshBuilder.CreateBox($"box{yIter}{xIter}{zIter}",
                             new
                             {
                                 width = boxW,
                                 height = boxH,
                                 depth = boxD,
-                                faceColors = new[] {green, green, green, green, blue, red}
+                                faceColors = new[] { green, green, green, green, blue, red }
                             }, scene);
-                        decimal animH = palH + palSelfH + 1.5m;
+                        var box = boxArray[yIter,xIter,zIter];
+                        
                         box.enableEdgesRendering();
                         box.edgesWidth = 1.0m;
                         box.edgesColor = new Color4(0, 0, 0, 1);
-                        box.position = new Vector3(x + (boxW / 2), animH, z + (boxD / 2));
+                        box.position = new Vector3(x + (boxW / 2), y +(boxH/2), z + (boxD / 2));
+                        box.setEnabled(false);
 
-                        
-                        Task animate = new Task(() =>
-                        {
-                            const decimal speed = 0.02m;
-                            scene.registerBeforeRender(new ActionCallback(() => 
-                            {
-                                if (animH <= (palSelfH + (boxH / 2)))
-                                {
-                                    box.position.y = palSelfH + (boxH/2);
-                                    return Task.CompletedTask;
-                                }
-
-                                animH -= speed;
-                                box.position.y = animH;
-                                return Task.CompletedTask;
-                            }));
-                        });
-                        animate.Start();
-                           
                         //Task.WaitAny(animate);
-                        await Task.Delay(1000);
-                       
-                        
+
                     }
                 }
             }
+            var advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
+            //var selection = new BABYLON.GUI.SelectionPanel("sp"); why doesnt this exist???????????
+            var button = Button.CreateSimpleButton("button", "Pause");
+            button.top = "200px";
+            button.width = "150px";
+            button.height = "40px";
+            button.color = "white";
+            button.cornerRadius = 20;
+            button.background = "green";
             
-        }
-        
-        
-    /*
-     Animation ySlide = new Animation("ySlide", "AnimH", frameRate,
-     BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
-         
-    IAnimationKey[] test = new IAnimationKey[3];
-    test[0] = new IAnimationKeyCachedEntity{frame = 0, value = new CachedEntity{___guid = animH.ToString()}};
-    test[1] = new IAnimationKeyCachedEntity{frame = 0, value = new CachedEntity{___guid = (animH/2).ToString()}};
-    test[2] = new IAnimationKeyCachedEntity{frame = 0, value = new CachedEntity{___guid = (palSelfH).ToString()}};
-    ((IList)box.animations).Add(ySlide);
-    */
-        
-
-            /*var heptagonalPrism = news
+            advancedTexture.addControl(button);
+            const decimal speed = 0.03m;
+            decimal animH = (palH + palSelfH + 1.5m);
+            
+            foreach(Mesh i in boxArray)
+            {
+                var finalY = i.position.y;
+                i.position.y = animH;
+                i.setEnabled(true);
+               
+                    while (i.position.y > finalY)
                     {
-                        name = "Heptagonal Prism",
-                        category = new[] {"Prism"},
-                        vertex = new decimal[][]
-                        {
-                            new decimal[] {0, 0, 1.090071m}, new decimal[] {0.796065m, 0, 0.7446715m},
-                            new decimal[] {-0.1498633m, 0.7818315m, 0.7446715m},
-                            new decimal[] {-0.7396399m, -0.2943675m, 0.7446715m},
-                            new decimal[] {0.6462017m, 0.7818315m, 0.3992718m},
-                            new decimal[] {1.049102m, -0.2943675m, -0.03143449m},
-                            new decimal[] {-0.8895032m, 0.487464m, 0.3992718m},
-                            new decimal[] {-0.8658909m, -0.6614378m, -0.03143449m},
-                            new decimal[] {0.8992386m, 0.487464m, -0.3768342m},
-                            new decimal[] {0.5685687m, -0.6614378m, -0.6538232m},
-                            new decimal[] {-1.015754m, 0.1203937m, -0.3768342m},
-                            new decimal[] {-0.2836832m, -0.8247995m, -0.6538232m},
-                            new decimal[] {0.4187054m, 0.1203937m, -0.9992228m},
-                            new decimal[] {-0.4335465m, -0.042968m, -0.9992228m}
-                        },
-                        face = new decimal[][]
-                        {
-                            new decimal[] {0, 1, 4, 2}, new decimal[] {0, 2, 6, 3}, new decimal[] {1, 5, 8, 4},
-                            new decimal[] {3, 6, 10, 7}, new decimal[] {5, 9, 12, 8}, new decimal[] {7, 10, 13, 11},
-                            new decimal[] {9, 11, 13, 12}, new decimal[] {0, 3, 7, 11, 9, 5, 1},
-                            new decimal[] {2, 4, 8, 12, 13, 10, 6}
-                        }
+                        i.position.y -= speed;
+                        await Task.Delay(1);
                     }
-                    ;
-                Random r = new Random();
-                var faceColors = new List<Color3>();
-                for (var i = 0; i < 9; i++)
-                {
-                    faceColors.Add(new Color3(r.Next(), r.Next(), r.Next()));
+                    i.position.y = finalY;
                 }
-        
-                var heptPrism = MeshBuilder.CreatePolyhedron("h",
-                    new {custom = heptagonalPrism, faceColors = faceColors.ToArray()}, scene);
-                heptPrism.position = new Vector3(3, 3, 3);
-                */
+           
             
+           
+            /*
+            scene.registerBeforeRender(new ActionCallback(async () => await Task.Run(() =>
+            {
+                if (animH <= (y + (boxH / 2)))
+                {
+                    box.position.y = y + (boxH / 2);
+                    return Task.CompletedTask;
+                }
+                animH -= speed;
+                box.position.y = animH;
+                return null;
+            })));
+            await Task.Delay(200);
+            */
+        }
 
-    public string ___guid { get; set; }
+
+        /*
+         Animation ySlide = new Animation("ySlide", "AnimH", frameRate,
+         BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
+
+        IAnimationKey[] test = new IAnimationKey[3];
+        test[0] = new IAnimationKeyCachedEntity{frame = 0, value = new CachedEntity{___guid = animH.ToString()}};
+        test[1] = new IAnimationKeyCachedEntity{frame = 0, value = new CachedEntity{___guid = (animH/2).ToString()}};
+        test[2] = new IAnimationKeyCachedEntity{frame = 0, value = new CachedEntity{___guid = (palSelfH).ToString()}};
+        ((IList)box.animations).Add(ySlide);
+        */
+
+
+        /*var heptagonalPrism = news
+                {
+                    name = "Heptagonal Prism",
+                    category = new[] {"Prism"},
+                    vertex = new decimal[][]
+                    {
+                        new decimal[] {0, 0, 1.090071m}, new decimal[] {0.796065m, 0, 0.7446715m},
+                        new decimal[] {-0.1498633m, 0.7818315m, 0.7446715m},
+                        new decimal[] {-0.7396399m, -0.2943675m, 0.7446715m},
+                        new decimal[] {0.6462017m, 0.7818315m, 0.3992718m},
+                        new decimal[] {1.049102m, -0.2943675m, -0.03143449m},
+                        new decimal[] {-0.8895032m, 0.487464m, 0.3992718m},
+                        new decimal[] {-0.8658909m, -0.6614378m, -0.03143449m},
+                        new decimal[] {0.8992386m, 0.487464m, -0.3768342m},
+                        new decimal[] {0.5685687m, -0.6614378m, -0.6538232m},
+                        new decimal[] {-1.015754m, 0.1203937m, -0.3768342m},
+                        new decimal[] {-0.2836832m, -0.8247995m, -0.6538232m},
+                        new decimal[] {0.4187054m, 0.1203937m, -0.9992228m},
+                        new decimal[] {-0.4335465m, -0.042968m, -0.9992228m}
+                    },
+                    face = new decimal[][]
+                    {
+                        new decimal[] {0, 1, 4, 2}, new decimal[] {0, 2, 6, 3}, new decimal[] {1, 5, 8, 4},
+                        new decimal[] {3, 6, 10, 7}, new decimal[] {5, 9, 12, 8}, new decimal[] {7, 10, 13, 11},
+                        new decimal[] {9, 11, 13, 12}, new decimal[] {0, 3, 7, 11, 9, 5, 1},
+                        new decimal[] {2, 4, 8, 12, 13, 10, 6}
+                    }
+                }
+                ;
+            Random r = new Random();
+            var faceColors = new List<Color3>();
+            for (var i = 0; i < 9; i++)
+            {
+                faceColors.Add(new Color3(r.Next(), r.Next(), r.Next()));
+            }
+
+            var heptPrism = MeshBuilder.CreatePolyhedron("h",
+                new {custom = heptagonalPrism, faceColors = faceColors.ToArray()}, scene);
+            heptPrism.position = new Vector3(3, 3, 3);
+            */
+
+
+        public string ___guid { get; set; }
     }
 
 }

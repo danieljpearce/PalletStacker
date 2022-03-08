@@ -74,9 +74,9 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 Console.WriteLine(
                     $"Clicked: {arg1.x}, {arg1.y}"
                 );
-                var xx = vector.getClassName();
                 ClickPosition = arg1;
                 await InvokeAsync(StateHasChanged);
+                var xx = vector.getClassName();
             });
             advancedTexture.addControl(
                 button
