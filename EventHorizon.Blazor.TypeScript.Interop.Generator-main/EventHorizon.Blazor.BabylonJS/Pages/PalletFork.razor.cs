@@ -152,13 +152,13 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             var advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
             //var selection = new BABYLON.GUI.SelectionPanel("sp"); why doesnt this exist???????????
 
-            Button button = Button.CreateSimpleButton("button", "Start");
-            button.top = "200px";
-            button.width = "150px";
-            button.height = "40px";
-            button.color = "white";
-            button.cornerRadius = 20;
-            button.background = "green";
+            Button nextLayer = Button.CreateSimpleButton("nextLayer", "Next Layer");
+            nextLayer.top = "200px";
+            nextLayer.width = "150px";
+            nextLayer.height = "40px";
+            nextLayer.color = "white";
+            nextLayer.cornerRadius = 20;
+            nextLayer.background = "green";
 
             Button button2 = Button.CreateSimpleButton("button2", "WIP");
             button2.top = "200px";
@@ -169,177 +169,86 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             button2.cornerRadius = 20;
             button2.background = "green";
 
-            Button button3 = Button.CreateSimpleButton("button3", "Next Box");
-            button3.top = "200px";
-            button3.left = "-200px";
-            button3.width = "150px";
-            button3.height = "40px";
-            button3.color = "white";
-            button3.cornerRadius = 20;
-            button3.background = "green";
-
-            bool running = false;
-            button.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
-            {
-                if (running == false)
-                {
-                    running = true;
-                    await animate();
-                }
-            });
+            Button nextBox = Button.CreateSimpleButton("nextBox", "Next Box");
+            nextBox.top = "200px";
+            nextBox.left = "-200px";
+            nextBox.width = "150px";
+            nextBox.height = "40px";
+            nextBox.color = "white";
+            nextBox.cornerRadius = 20;
+            nextBox.background = "green";
 
 
-            button3.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
-            {
-                //todo
-            });
             
-            advancedTexture.addControl(button);
+            advancedTexture.addControl(nextLayer);
 
             advancedTexture.addControl(button2);
 
-            advancedTexture.addControl(button3);
+            advancedTexture.addControl(nextBox);
 
-            async Task animate()
+          
+            decimal speed = 0.03m;
+            decimal animH = (palY + palSelfY + 1.5m);
+            int[] xyz = new int[3] { 0, 0, 0 };
+            decimal finalY = boxList[0].position.y;
+            bool skipToNextLayer = false;
+
+            foreach (Mesh box in boxList)
             {
-                const decimal speed = 0.03m;
-                decimal animH = (palY + palSelfY + 1.5m);
-                int[] xyz = new int[3] { 0, 0, 0 };
+                TaskCompletionSource<bool> canDrawNextBox = null;
+                TaskCompletionSource<bool> canDrawNextLayer = null;
                 
-                foreach (Mesh box in boxList)
+                //On Click of 'Next Box'
+                nextBox.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
-                    TaskCompletionSource<bool> play = null;
-                    button3.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
-                    {
-                        play?.TrySetResult(true);
-                    });
-                    var finalY = box.position.y;
-                    play = new TaskCompletionSource<bool>();
-                    await play.Task;
-                    box.position.y = animH;
-                    box.setEnabled(true);
-                    while ((box.position.y > finalY))
-                    {
-                        box.position.y -= speed;
-                        await Task.Delay(1);
-                    }
-                    box.position.y = finalY;
-  
-                }
+                    skipToNextLayer = false;
+                    canDrawNextLayer?.TrySetResult(true);
+                    canDrawNextBox?.TrySetResult(true);
+                });
 
-                /*
-                                async Task animate2()
-                            {
-
-                                for (int y = xyz[1]; y < boxArray.GetLength(1); y++)
-                                {  
-                                    for (int z = xyz[2]; z < boxArray.GetLength(2); z++)
-                                    {
-                                        for (int x = xyz[0]; x < boxArray.GetLength(0); x++)
-                                        {                     
-                                            button2.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
-                                            {
-                                                xyz[0] = x;
-                                                xyz[1] = y;
-                                                xyz[2] = z;
-                                                z = boxArray.GetLength(2);
-                                                y = boxArray.GetLength(1);
-                                                x = boxArray.GetLength(0);
-                                            });
-                                            var box = boxArray[x, y, z];
-                                            var finalY = box.position.y;
-                                            box.position.y = animH;
-                                            box.setEnabled(true);
-                                            while (box.position.y > finalY)
-                                            {
-                                                box.position.y -= speed;
-                                                await Task.Delay(1);
-                                            }
-                                            box.position.y = finalY;
-                                        }
-
-
-                                    }
-
-                                }
-                                running = false;
-
-                            }
-                */
-
-             
-            }
-        }
-            /*
-            scene.registerBeforeRender(new ActionCallback(async () => await Task.Run(() =>
-            {
-                if (animH <= (y + (boxY / 2)))
+                //On Click of 'Next Layer'
+                nextLayer.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
-                    box.position.y = y + (boxY / 2);
-                    return Task.CompletedTask;
+                    skipToNextLayer = true;
+                    canDrawNextLayer?.TrySetResult(true);
+                    canDrawNextBox?.TrySetResult(true);
+                });
+
+                //check if this box belongs to a new layer
+                if (box.position.y > finalY)
+                {
+                    canDrawNextLayer = new TaskCompletionSource<bool>();
+                    await canDrawNextLayer.Task;
                 }
-                animH -= speed;
+                
+
+                canDrawNextBox = new TaskCompletionSource<bool>();
+                if (skipToNextLayer == true)
+                {
+                    canDrawNextBox?.TrySetResult(true);
+                    speed = 0.08m;//speed up movement of boxes when skipping layers
+                }
+                else{
+                    speed = 0.03m;
+                }
+                await canDrawNextBox.Task;
+                if(skipToNextLayer == true) { speed = 0.08m; }//makes the first box of the layer skip also move faster
+                finalY = box.position.y;
+
                 box.position.y = animH;
-                return null;
-            })));
-            await Task.Delay(200);
-            */
-        
-
-
-        /*
-         Animation ySlide = new Animation("ySlide", "AnimH", frameRate,
-         BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
-
-        IAnimationKey[] test = new IAnimationKey[3];
-        test[0] = new IAnimationKeyCachedEntity{frame = 0, value = new CachedEntity{___guid = animH.ToString()}};
-        test[1] = new IAnimationKeyCachedEntity{frame = 0, value = new CachedEntity{___guid = (animH/2).ToString()}};
-        test[2] = new IAnimationKeyCachedEntity{frame = 0, value = new CachedEntity{___guid = (palSelfY).ToString()}};
-        ((IList)box.animations).Add(ySlide);
-        */
-
-
-        /*var heptagonalPrism = news
+                box.setEnabled(true);
+                while ((box.position.y > finalY))
                 {
-                    name = "Heptagonal Prism",
-                    category = new[] {"Prism"},
-                    vertex = new decimal[][]
-                    {
-                        new decimal[] {0, 0, 1.090071m}, new decimal[] {0.796065m, 0, 0.7446715m},
-                        new decimal[] {-0.1498633m, 0.7818315m, 0.7446715m},
-                        new decimal[] {-0.7396399m, -0.2943675m, 0.7446715m},
-                        new decimal[] {0.6462017m, 0.7818315m, 0.3992718m},
-                        new decimal[] {1.049102m, -0.2943675m, -0.03143449m},
-                        new decimal[] {-0.8895032m, 0.487464m, 0.3992718m},
-                        new decimal[] {-0.8658909m, -0.6614378m, -0.03143449m},
-                        new decimal[] {0.8992386m, 0.487464m, -0.3768342m},
-                        new decimal[] {0.5685687m, -0.6614378m, -0.6538232m},
-                        new decimal[] {-1.015754m, 0.1203937m, -0.3768342m},
-                        new decimal[] {-0.2836832m, -0.8247995m, -0.6538232m},
-                        new decimal[] {0.4187054m, 0.1203937m, -0.9992228m},
-                        new decimal[] {-0.4335465m, -0.042968m, -0.9992228m}
-                    },
-                    face = new decimal[][]
-                    {
-                        new decimal[] {0, 1, 4, 2}, new decimal[] {0, 2, 6, 3}, new decimal[] {1, 5, 8, 4},
-                        new decimal[] {3, 6, 10, 7}, new decimal[] {5, 9, 12, 8}, new decimal[] {7, 10, 13, 11},
-                        new decimal[] {9, 11, 13, 12}, new decimal[] {0, 3, 7, 11, 9, 5, 1},
-                        new decimal[] {2, 4, 8, 12, 13, 10, 6}
-                    }
+                    box.position.y -= speed;
+                    await Task.Delay(1);
                 }
-                ;
-            Random r = new Random();
-            var faceColors = new List<Color3>();
-            for (var i = 0; i < 9; i++)
-            {
-                faceColors.Add(new Color3(r.Next(), r.Next(), r.Next()));
+                box.position.y = finalY;
+  
             }
 
-            var heptPrism = MeshBuilder.CreatePolyhedron("h",
-                new {custom = heptagonalPrism, faceColors = faceColors.ToArray()}, scene);
-            heptPrism.position = new Vector3(3, 3, 3);
-            */
-
+            }
+   
+          
 
         public string ___guid { get; set; }
     }
