@@ -58,6 +58,11 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 ),
                 scene
             );
+            engine.runRenderLoop(
+              new ActionCallback(
+                  () => Task.Run(() => scene.render(true, false))
+              )
+          );
             var advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
             var button = Button.CreateSimpleButton(
                 "button", "Click Me"
@@ -68,6 +73,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             button.background = "green";
             button.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
             {
+                Console.WriteLine("clicked");
                 var x = arg1.x.ToString();
                 var fds = arg1.buttonIndex;
                 var vector = new Vector3(2.1m, 3.2m, 4.1m);
@@ -75,7 +81,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                     $"Clicked: {arg1.x}, {arg1.y}"
                 );
                 ClickPosition = arg1;
-                await InvokeAsync(StateHasChanged);
+                //await InvokeAsync(StateHasChanged);
                 var xx = vector.getClassName();
             });
             advancedTexture.addControl(
@@ -101,11 +107,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             freeCamera.attachControl(
                 false
             );
-            engine.runRenderLoop(
-                new ActionCallback(
-                    () => Task.Run(() => scene.render(true, false))
-                )
-            );
+          
 
             _engine = engine;
         }

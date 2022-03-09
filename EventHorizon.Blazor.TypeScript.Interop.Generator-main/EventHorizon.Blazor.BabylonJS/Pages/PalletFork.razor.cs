@@ -60,15 +60,15 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 scene
             )).ToEntity<SceneLoaderImportMeshEntity>();
             palletModel.meshes[0].name = "pallet";
-            decimal palW = 1.2m, palD = 1m, palH = 1m, palSelfH = .16m;//Pallet dimensions
-            decimal boxW = 0.1m, boxD = 0.2m, boxH = 0.3m; //Box dimensions
+            decimal palX = 1.2m, palZ = 1m, palY = 1m, palSelfY = .16m;//Pallet dimensions
+            decimal boxX = 0.3m, boxZ = 0.5m, boxY = 0.2m; //Box dimensions - BOXES ONLY CURRENTLY WORK IF THEYRE DIVISIBLE BY PALLET DIMENSIONS
             //add an arcRotateCamera to the scene
             var camera = new ArcRotateCamera(
                 "camera",
                 Tools.ToRadians(60), //maypole arc
                 Tools.ToRadians(60), //birdseye-to-horizon arc
                 10,
-                new Vector3(palW / 2, palD / 2, palH / 2),
+                new Vector3(palX / 2, palZ / 2, palY / 2),
                 scene
             );
             camera.lowerRadiusLimit = 2;
@@ -88,7 +88,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
 
           
             bool flip = false;
-            //palH = boxH; //temporary
+            //palY = boxY; //temporary
             engine.runRenderLoop(new ActionCallback(
                 () => Task.Run(() => _scene.render(true, false))
             ));
@@ -96,41 +96,47 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
 
 
             //initialize 3D array with dimensions derived from box size
-            Mesh[,,] boxArray = new Mesh[Convert.ToInt32(palH / boxH),Convert.ToInt32(palW / boxW),Convert.ToInt32(palD / boxD)];
+            Mesh[,,] boxArray = new Mesh[Convert.ToInt32(palX / boxX),Convert.ToInt32(palY / boxY),Convert.ToInt32(palZ / boxZ)];
             int xIter = -1;
             int zIter = -1;
             int yIter = -1;
             //nested loops to draw and position boxes 
-            for (decimal y = palSelfH; y < palH; y += boxH)//3
+            for (decimal y = palSelfY; y < palY; y += boxY)//3
             {
             yIter++;
                 zIter = -1;
-                for (decimal z = 0; z < palD; z += boxD)//5
+                for (decimal z = 0; z < palZ; z += boxZ)//5
                 {
                 zIter++;
                     xIter = -1;
-                    for (decimal x = 0; x < palW; x += boxW)//12
+                    for (decimal x = 0; x < palX; x += boxX)//12
                         {
                         xIter++;
                         //var alpha = flip ? 0.5m : 1m;     idk what this does , like why is alpha not just 1 value?
                         //flip = !flip;
                         var red = new Color4(1, 0, 0, 1);
                         var blue = new Color4(0, 0, 1, 1);
-                        var green = new Color4(0, 1, 0, 1);     
-                        boxArray[yIter, xIter, zIter] = MeshBuilder.CreateBox($"box{yIter}{xIter}{zIter}",
+                        var green = new Color4(0, 1, 0, 1);  
+                        //fill 3D array
+                        boxArray[xIter, yIter, zIter] = MeshBuilder.CreateBox($"box{xIter}{yIter}{zIter}",
                             new
                             {
-                                width = boxW,
-                                height = boxH,
-                                depth = boxD,
+                                width = boxX,
+                                height = boxY,
+                                depth = boxZ,
                                 faceColors = new[] { green, green, green, green, blue, red }
                             }, scene);
-                        var box = boxArray[yIter,xIter,zIter];
-                        
+                        var box = boxArray[xIter,yIter,zIter];
+                       
+                        //Add edges to box
                         box.enableEdgesRendering();
                         box.edgesWidth = 1.0m;
                         box.edgesColor = new Color4(0, 0, 0, 1);
-                        box.position = new Vector3(x + (boxW / 2), y +(boxH/2), z + (boxD / 2));
+
+                        //move box to its final position
+                        box.position = new Vector3(x + (boxX / 2), y +(boxY/2), z + (boxZ / 2));
+
+                        //Make box invisible
                         box.setEnabled(false);
 
                         //Task.WaitAny(animate);
@@ -140,40 +146,108 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             }
             var advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
             //var selection = new BABYLON.GUI.SelectionPanel("sp"); why doesnt this exist???????????
-            var button = Button.CreateSimpleButton("button", "Pause");
+
+            Button button = Button.CreateSimpleButton("button","Start");
             button.top = "200px";
             button.width = "150px";
             button.height = "40px";
             button.color = "white";
             button.cornerRadius = 20;
             button.background = "green";
-            
-            advancedTexture.addControl(button);
+
+            Button button2 = Button.CreateSimpleButton("button2", "Stop");
+            button2.top = "200px";
+            button2.left = "200px";
+            button2.width = "150px";
+            button2.height = "40px";
+            button2.color = "white";
+            button2.cornerRadius = 20;
+            button2.background = "green";
+
+            Button button3 = Button.CreateSimpleButton("button3", "Reset");
+            button3.top = "200px";
+            button3.left = "-200px";
+            button3.width = "150px";
+            button3.height = "40px";
+            button3.color = "white";
+            button3.cornerRadius = 20;
+            button3.background = "green";
+
+
+
+
             const decimal speed = 0.03m;
-            decimal animH = (palH + palSelfH + 1.5m);
-            
-            foreach(Mesh i in boxArray)
+            decimal animH = (palY + palSelfY + 1.5m);
+            int[] xyz = new int[3] {0,0,0};
+            bool running = false;
+         
+
+            async Task animate()
             {
-                var finalY = i.position.y;
-                i.position.y = animH;
-                i.setEnabled(true);
-               
-                    while (i.position.y > finalY)
+  
+                for (int y = xyz[1]; y < boxArray.GetLength(1); y++)
+                {  
+                    for (int z = xyz[2]; z < boxArray.GetLength(2); z++)
                     {
-                        i.position.y -= speed;
-                        await Task.Delay(1);
+                        for (int x = xyz[0]; x < boxArray.GetLength(0); x++)
+                        {                     
+                            button2.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
+                            {
+                                xyz[0] = x;
+                                xyz[1] = y;
+                                xyz[2] = z;
+                                z = boxArray.GetLength(2);
+                                y = boxArray.GetLength(1);
+                                x = boxArray.GetLength(0);
+                            });
+                            var box = boxArray[x, y, z];
+                            var finalY = box.position.y;
+                            box.position.y = animH;
+                            box.setEnabled(true);
+                            while (box.position.y > finalY)
+                            {
+                                box.position.y -= speed;
+                                await Task.Delay(1);
+                            }
+                            box.position.y = finalY;
+                        }
+              
+                        
                     }
-                    i.position.y = finalY;
+                  
                 }
-           
-            
-           
+                running = false;
+
+            }
+
+         
+            button.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
+            {
+                if(running == false)
+                {
+                    running = true;
+                    await animate();
+                    Console.WriteLine(string.Join("\n", xyz));
+                }          
+            });
+
+            button3.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
+            {
+            //todo
+            });
+
+            advancedTexture.addControl(button);
+
+            advancedTexture.addControl(button2);
+
+            advancedTexture.addControl(button3);
+
             /*
             scene.registerBeforeRender(new ActionCallback(async () => await Task.Run(() =>
             {
-                if (animH <= (y + (boxH / 2)))
+                if (animH <= (y + (boxY / 2)))
                 {
-                    box.position.y = y + (boxH / 2);
+                    box.position.y = y + (boxY / 2);
                     return Task.CompletedTask;
                 }
                 animH -= speed;
@@ -192,7 +266,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
         IAnimationKey[] test = new IAnimationKey[3];
         test[0] = new IAnimationKeyCachedEntity{frame = 0, value = new CachedEntity{___guid = animH.ToString()}};
         test[1] = new IAnimationKeyCachedEntity{frame = 0, value = new CachedEntity{___guid = (animH/2).ToString()}};
-        test[2] = new IAnimationKeyCachedEntity{frame = 0, value = new CachedEntity{___guid = (palSelfH).ToString()}};
+        test[2] = new IAnimationKeyCachedEntity{frame = 0, value = new CachedEntity{___guid = (palSelfY).ToString()}};
         ((IList)box.animations).Add(ySlide);
         */
 
