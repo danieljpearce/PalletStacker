@@ -61,7 +61,8 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             )).ToEntity<SceneLoaderImportMeshEntity>();
             palletModel.meshes[0].name = "pallet";
             decimal palX = 1.2m, palZ = 1m, palY = 1m, palSelfY = .16m;//Pallet dimensions
-            decimal boxX = 0.3m, boxZ = 0.5m, boxY = 0.2m; //Box dimensions - BOXES ONLY CURRENTLY WORK IF THEYRE DIVISIBLE BY PALLET DIMENSIONS
+            decimal boxX = 0.3m, boxZ = 0.5m, boxY = 0.2m; //Box dimensions 
+           
             //add an arcRotateCamera to the scene
             var camera = new ArcRotateCamera(
                 "camera",
@@ -160,14 +161,14 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             nextLayer.cornerRadius = 20;
             nextLayer.background = "green";
 
-            Button button2 = Button.CreateSimpleButton("button2", "WIP");
-            button2.top = "200px";
-            button2.left = "200px";
-            button2.width = "150px";
-            button2.height = "40px";
-            button2.color = "white";
-            button2.cornerRadius = 20;
-            button2.background = "green";
+            Button resetButton = Button.CreateSimpleButton("resetButton", "Reset");
+            resetButton.top = "200px";
+            resetButton.left = "200px";
+            resetButton.width = "150px";
+            resetButton.height = "40px";
+            resetButton.color = "white";
+            resetButton.cornerRadius = 20;
+            resetButton.background = "green";
 
             Button nextBox = Button.CreateSimpleButton("nextBox", "Next Box");
             nextBox.top = "200px";
@@ -177,22 +178,18 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             nextBox.color = "white";
             nextBox.cornerRadius = 20;
             nextBox.background = "green";
-
-
-            
-            advancedTexture.addControl(nextLayer);
-
-            advancedTexture.addControl(button2);
-
-            advancedTexture.addControl(nextBox);
-
           
+            advancedTexture.addControl(nextLayer);
+            advancedTexture.addControl(resetButton);
+            advancedTexture.addControl(nextBox);
+         
             decimal speed = 0.03m;
             decimal animH = (palY + palSelfY + 1.5m);
             int[] xyz = new int[3] { 0, 0, 0 };
             decimal finalY = boxList[0].position.y;
             bool skipToNextLayer = false;
-
+            bool reset = false;
+            restart:
             foreach (Mesh box in boxList)
             {
                 TaskCompletionSource<bool> canDrawNextBox = null;
@@ -203,7 +200,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 {
                     skipToNextLayer = false;
                     canDrawNextLayer?.TrySetResult(true);
-                    canDrawNextBox?.TrySetResult(true);
+                    canDrawNextBox?.TrySetResult(true);                   
                 });
 
                 //On Click of 'Next Layer'
@@ -214,25 +211,39 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                     canDrawNextBox?.TrySetResult(true);
                 });
 
+                //On Click of 'resetButton'
+                resetButton.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
+                {
+                    reset = true;
+                    canDrawNextBox?.TrySetResult(true);
+                });
+
                 //check if this box belongs to a new layer
                 if (box.position.y > finalY)
                 {
                     canDrawNextLayer = new TaskCompletionSource<bool>();
                     await canDrawNextLayer.Task;
                 }
-                
-
+                //set canDrawNextBox to true for rest of the layer
                 canDrawNextBox = new TaskCompletionSource<bool>();
                 if (skipToNextLayer == true)
                 {
                     canDrawNextBox?.TrySetResult(true);
                     speed = 0.08m;//speed up movement of boxes when skipping layers
                 }
-                else{
+                else
+                {
                     speed = 0.03m;
                 }
-                await canDrawNextBox.Task;
-                if(skipToNextLayer == true) { speed = 0.08m; }//makes the first box of the layer skip also move faster
+                await canDrawNextBox.Task;//wait for permission to draw next box
+                if (reset == true)
+                {
+                    foreach (Mesh i in boxList) { i.setEnabled(false); }
+                    reset = false;
+                    goto restart;
+                }
+
+                if (skipToNextLayer == true) { speed = 0.08m; }//makes the first box of the layer skip also move faster
                 finalY = box.position.y;
 
                 box.position.y = animH;
@@ -243,7 +254,9 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                     await Task.Delay(1);
                 }
                 box.position.y = finalY;
-  
+
+                //disable every box and goto start of foreach
+               
             }
 
             }
