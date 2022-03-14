@@ -62,7 +62,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             palletModel.meshes[0].name = "pallet";
             decimal palX = 1.2m, palZ = 1m, palY = 1m, palSelfY = .16m;//Pallet dimensions
             decimal boxX = 0.3m, boxZ = 0.5m, boxY = 0.2m; //Box dimensions 
-           
+
             //add an arcRotateCamera to the scene
             var camera = new ArcRotateCamera(
                 "camera",
@@ -162,7 +162,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             nextLayer.background = "green";
 
             Button resetButton = Button.CreateSimpleButton("resetButton", "Reset");
-            resetButton.top = "200px";
+            resetButton.top = "225px";
             resetButton.left = "200px";
             resetButton.width = "150px";
             resetButton.height = "40px";
@@ -178,29 +178,56 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             nextBox.color = "white";
             nextBox.cornerRadius = 20;
             nextBox.background = "green";
-          
+
+            Button lastBox = Button.CreateSimpleButton("lastBox", "Last Box");
+            lastBox.top = "250px";
+            lastBox.left = "-200px";
+            lastBox.width = "150px";
+            lastBox.height = "40px";
+            lastBox.color = "white";
+            lastBox.cornerRadius = 20;
+            lastBox.background = "green";
+
+            Button lastLayer = Button.CreateSimpleButton("lastLayer", "Last Layer");
+            lastLayer.top = "250px";
+            lastLayer.width = "150px";
+            lastLayer.height = "40px";
+            lastLayer.color = "white";
+            lastLayer.cornerRadius = 20;
+            lastLayer.background = "green";
+
+
             advancedTexture.addControl(nextLayer);
             advancedTexture.addControl(resetButton);
             advancedTexture.addControl(nextBox);
-         
+            advancedTexture.addControl(lastBox);
+            advancedTexture.addControl(lastLayer);
+
             decimal speed = 0.03m;
             decimal animH = (palY + palSelfY + 1.5m);
-            int[] xyz = new int[3] { 0, 0, 0 };
             decimal finalY = boxList[0].position.y;
+
             bool skipToNextLayer = false;
             bool reset = false;
-            restart:
-            foreach (Mesh box in boxList)
+            bool reverse = false;
+
+restart:    
+            for (int i = 0; i < boxList.Count; i++)
             {
+                if(i < 0) { i = 0; }//prevents the value of i from not matching a value in list
+                boxList[i].setEnabled(false);
+
+                int currentBoxIndex = boxList.IndexOf(boxList[i]);
+                Console.WriteLine(currentBoxIndex);
                 TaskCompletionSource<bool> canDrawNextBox = null;
                 TaskCompletionSource<bool> canDrawNextLayer = null;
-                
+
                 //On Click of 'Next Box'
                 nextBox.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
                     skipToNextLayer = false;
                     canDrawNextLayer?.TrySetResult(true);
-                    canDrawNextBox?.TrySetResult(true);                   
+                    canDrawNextBox?.TrySetResult(true);
                 });
 
                 //On Click of 'Next Layer'
@@ -215,11 +242,26 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 resetButton.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
                     reset = true;
-                    canDrawNextBox?.TrySetResult(true);
+                    skipToNextLayer = false;
+                    canDrawNextLayer?.TrySetResult(true);
+                    canDrawNextBox?.TrySetResult(false);
+                });
+
+                lastBox.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
+                {
+                    reverse = true;
+                    skipToNextLayer = false;
+                    canDrawNextLayer?.TrySetResult(true);
+                    canDrawNextBox?.TrySetResult(false);
+                });
+
+                lastLayer.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
+                {
+                    //todo
                 });
 
                 //check if this box belongs to a new layer
-                if (box.position.y > finalY)
+                if (boxList[i].position.y > finalY)
                 {
                     canDrawNextLayer = new TaskCompletionSource<bool>();
                     await canDrawNextLayer.Task;
@@ -236,31 +278,35 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                     speed = 0.03m;
                 }
                 await canDrawNextBox.Task;//wait for permission to draw next box
-                if (reset == true)
+
+                if (reset == true)//if reset button has been pressed
                 {
-                    foreach (Mesh i in boxList) { i.setEnabled(false); }
-                    reset = false;
+                    foreach (Mesh x in boxList) { x.setEnabled(false); }
+                    reset = !reset;
                     goto restart;
                 }
 
-                if (skipToNextLayer == true) { speed = 0.08m; }//makes the first box of the layer skip also move faster
-                finalY = box.position.y;
-
-                box.position.y = animH;
-                box.setEnabled(true);
-                while ((box.position.y > finalY))
+                if (reverse == true)
                 {
-                    box.position.y -= speed;
+                    i -= 2;
+                    reverse = !reverse;
+                    continue;
+                }
+
+                if (skipToNextLayer == true) { speed = 0.08m; }//makes the first box of the layer skip also move faster
+                finalY = boxList[i].position.y;
+
+                boxList[i].position.y = animH;
+                boxList[i].setEnabled(true);
+                while ((boxList[i].position.y > finalY))
+                {
+                    boxList[i].position.y -= speed;
                     await Task.Delay(1);
                 }
-                box.position.y = finalY;
-
-                //disable every box and goto start of foreach
-               
+                boxList[i].position.y = finalY;
             }
 
-            }
-   
+        }
           
 
         public string ___guid { get; set; }
