@@ -252,12 +252,13 @@ restart:
                     reverse = true;
                     skipToNextLayer = false;
                     canDrawNextLayer?.TrySetResult(true);
-                    canDrawNextBox?.TrySetResult(false);
+                    canDrawNextBox?.TrySetResult(true);
                 });
 
                 lastLayer.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
-                    //todo
+                    reverse = true;
+                    skipToNextLayer = true;
                 });
 
                 //check if this box belongs to a new layer
@@ -314,3 +315,31 @@ restart:
 
 }
 
+/* Sudo for less shit code
+ * 
+ * 
+finalY = boxList[0].position.y;
+for (box in boxlist){
+    
+    taskcompletion nextBox = false;
+    taskcompletion buttonClick = false;
+
+    OnClick NextBox{
+        drawNextBox = true;
+        buttonClick?.TrySetResult(true);
+    }
+    OnClick NextLayer{
+        drawNextLayer = true;
+        buttonClick?.TrySetResult(true);
+    }
+
+    await buttonClick.task;
+    if(drawNextBox == true || drawNextLayer == true){
+        nextBox?.TrySetResult(true);
+        drawNextBox = false;
+    }
+
+    await nextBox.Task; 
+    animateNextBox
+}
+*/
