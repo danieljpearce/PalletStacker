@@ -94,8 +94,6 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 () => Task.Run(() => _scene.render(true, false))
             ));
 
-
-
             //make 3D array with dimensions derived from box size
             //Mesh[,,] boxArray = new Mesh[Convert.ToInt32(palX / boxX),Convert.ToInt32(palY / boxY),Convert.ToInt32(palZ / boxZ)]; 
 
@@ -196,7 +194,6 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             lastLayer.cornerRadius = 20;
             lastLayer.background = "green";
 
-
             advancedTexture.addControl(nextLayer);
             advancedTexture.addControl(resetButton);
             advancedTexture.addControl(nextBox);
@@ -210,7 +207,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             bool skipToNextLayer = false;
             bool reset = false;
             bool reverse = false;
-
+            bool removeLayer = false;
 restart:    
             for (int i = 0; i < boxList.Count; i++)
             {
@@ -247,6 +244,7 @@ restart:
                     canDrawNextBox?.TrySetResult(false);
                 });
 
+                //On Click of 'lastBox'
                 lastBox.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
                     reverse = true;
@@ -255,13 +253,14 @@ restart:
                     canDrawNextBox?.TrySetResult(false);
                 });
 
+                //On Click of 'lastLayer'
                 lastLayer.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
                     //todo
                 });
 
                 //check if this box belongs to a new layer
-                if (boxList[i].position.y > finalY)
+                if (boxList[i].position.y != finalY)
                 {
                     canDrawNextLayer = new TaskCompletionSource<bool>();
                     await canDrawNextLayer.Task;
@@ -282,20 +281,25 @@ restart:
                 if (reset == true)//if reset button has been pressed
                 {
                     foreach (Mesh x in boxList) { x.setEnabled(false); }
-                    reset = !reset;
+                    reset = false;
                     goto restart;
                 }
 
-                if (reverse == true)
+                if (reverse == true)//goes to the last box 
                 {
                     i -= 2;
-                    reverse = !reverse;
+                    reverse = false;
+                    if(removeLayer == true)
+                    {
+                        reverse = true;
+                    }
                     continue;
                 }
 
                 if (skipToNextLayer == true) { speed = 0.08m; }//makes the first box of the layer skip also move faster
                 finalY = boxList[i].position.y;
 
+                //render animation 
                 boxList[i].position.y = animH;
                 boxList[i].setEnabled(true);
                 while ((boxList[i].position.y > finalY))
@@ -303,7 +307,7 @@ restart:
                     boxList[i].position.y -= speed;
                     await Task.Delay(1);
                 }
-                boxList[i].position.y = finalY;
+                boxList[i].position.y = finalY;//set position to finalY incase it overshot on the last iter
             }
 
         }
