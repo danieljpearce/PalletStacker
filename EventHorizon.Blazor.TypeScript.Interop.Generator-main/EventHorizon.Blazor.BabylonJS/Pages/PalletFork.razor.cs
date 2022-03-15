@@ -208,12 +208,15 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             decimal finalY = boxList[0].position.y;
 
             bool drawNextBox = false;
-            bool layerButtonPressed = false;
+            bool nextLayerButtonPressed = false;
             bool reset = false;
+            bool deleteCurrentBox = false;
+            bool deleteCurrentLayer = false;
 
   
             for (int i = 0; i < boxList.Count; i++)
             {
+                
                 TaskCompletionSource<bool> canDrawNextBox = new TaskCompletionSource<bool>();
                 TaskCompletionSource<bool> buttonClick = new TaskCompletionSource<bool>();
                 //On Click of 'Next Box'
@@ -227,7 +230,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 nextLayer.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
                     drawNextBox = true;
-                    layerButtonPressed = true;
+                    nextLayerButtonPressed = true;
                     buttonClick?.TrySetResult(true);
                 });
 
@@ -241,27 +244,41 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 //On Click of 'lastBox'
                 lastBox.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
-
+                    deleteCurrentBox = true;
+                    buttonClick?.TrySetResult(true);
                 });
 
                 //On Click of 'lastLayer'
                 lastLayer.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
-
+                    deleteCurrentLayer = true;
+                    buttonClick?.TrySetResult(true);
                 });
 
                 //detect new layer 
-                if(boxList[i].position.y > finalY)
+                if(boxList[i].position.y != finalY)
                 {
-                    layerButtonPressed = false;
+                    if(nextLayerButtonPressed == false) { speed = 0.03m; }
+                    deleteCurrentLayer = false;
+                    nextLayerButtonPressed = false;
                     drawNextBox = false;
                     finalY = boxList[i].position.y;
                 }
 
                 //if flag is true continue drawing rest of layer
-                if (layerButtonPressed == true)
+                if (nextLayerButtonPressed == true)
                 {
+                    speed = 0.08m;
                     drawNextBox = true;
+                    buttonClick?.TrySetResult(true);
+                }
+
+                //if flag is true continue deleting rest of layer
+                if (deleteCurrentLayer == true)
+                {
+                    deleteCurrentBox = true;
+                    drawNextBox = false;
+                    nextLayerButtonPressed = false;
                     buttonClick?.TrySetResult(true);
                 }
 
@@ -276,6 +293,25 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                     reset = false;
                     continue;
                 }
+
+                //delete most recent box if flag is true
+                if(deleteCurrentBox == true)
+                {
+                    if (i - 1 < 0)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        boxList[i - 1].setEnabled(false);
+                        i -= 2;
+                        if (i < -1) { i = -1; }//makes sure removing boxes cant set i to a negative value
+                        deleteCurrentBox = false;
+                        continue;
+                    }
+                }
+
+   
 
                 //draw next box if flag is true
                 if(drawNextBox == true)
@@ -295,6 +331,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                     await Task.Delay(1);
                 }
                 boxList[i].position.y = finalY;
+               
             }
       
         }
