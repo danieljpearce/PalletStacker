@@ -207,9 +207,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             decimal animH = (palY + palSelfY + 1.5m);
             decimal finalY = boxList[0].position.y;
 
-            bool skipToNextLayer = false;
-            bool reset = false;
-            bool reverse = false;
+            bool drawNextBox = false;
 
 restart:    
             for (int i = 0; i < boxList.Count; i++)
@@ -220,83 +218,45 @@ restart:
                 int currentBoxIndex = boxList.IndexOf(boxList[i]);
                 Console.WriteLine(currentBoxIndex);
                 TaskCompletionSource<bool> canDrawNextBox = null;
-                TaskCompletionSource<bool> canDrawNextLayer = null;
+                TaskCompletionSource<bool> buttonClick = null;
 
                 //On Click of 'Next Box'
                 nextBox.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
-                    skipToNextLayer = false;
-                    canDrawNextLayer?.TrySetResult(true);
-                    canDrawNextBox?.TrySetResult(true);
+                    drawNextBox = true;
+             
                 });
 
                 //On Click of 'Next Layer'
                 nextLayer.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
-                    skipToNextLayer = true;
-                    canDrawNextLayer?.TrySetResult(true);
-                    canDrawNextBox?.TrySetResult(true);
+                
                 });
 
                 //On Click of 'resetButton'
                 resetButton.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
-                    reset = true;
-                    skipToNextLayer = false;
-                    canDrawNextLayer?.TrySetResult(true);
-                    canDrawNextBox?.TrySetResult(false);
+ 
                 });
 
+                //On Click of 'lastBox'
                 lastBox.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
-                    reverse = true;
-                    skipToNextLayer = false;
-                    canDrawNextLayer?.TrySetResult(true);
-                    canDrawNextBox?.TrySetResult(true);
+
                 });
 
+                //On Click of 'lastLayer'
                 lastLayer.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
-                    reverse = true;
-                    skipToNextLayer = true;
+
                 });
 
-                //check if this box belongs to a new layer
-                if (boxList[i].position.y > finalY)
-                {
-                    canDrawNextLayer = new TaskCompletionSource<bool>();
-                    await canDrawNextLayer.Task;
-                }
-                //set canDrawNextBox to true for rest of the layer
-                canDrawNextBox = new TaskCompletionSource<bool>();
-                if (skipToNextLayer == true)
-                {
-                    canDrawNextBox?.TrySetResult(true);
-                    speed = 0.08m;//speed up movement of boxes when skipping layers
-                }
-                else
-                {
-                    speed = 0.03m;
-                }
-                await canDrawNextBox.Task;//wait for permission to draw next box
+                await buttonClick.Task;
 
-                if (reset == true)//if reset button has been pressed
-                {
-                    foreach (Mesh x in boxList) { x.setEnabled(false); }
-                    reset = !reset;
-                    goto restart;
-                }
+                await canDrawNextBox.Task;
 
-                if (reverse == true)
-                {
-                    i -= 2;
-                    reverse = !reverse;
-                    continue;
-                }
 
-                if (skipToNextLayer == true) { speed = 0.08m; }//makes the first box of the layer skip also move faster
-                finalY = boxList[i].position.y;
-
+                //animate
                 boxList[i].position.y = animH;
                 boxList[i].setEnabled(true);
                 while ((boxList[i].position.y > finalY))
@@ -332,13 +292,16 @@ for (box in boxlist){
         drawNextLayer = true;
         buttonClick?.TrySetResult(true);
     }
-
-    await buttonClick.task;
-    if(drawNextBox == true || drawNextLayer == true){
+    
+    if(drawNextLayer == true){
+        buttonClick?.TrySetResult(true)//keep setting button click to true until layer is drawn
+    }
+    await buttonClick.task; //wait here for a button to be clicked
+    
+    if(drawNextBox == true){
         nextBox?.TrySetResult(true);
         drawNextBox = false;
     }
-
     await nextBox.Task; 
     animateNextBox
 }
