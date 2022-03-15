@@ -208,35 +208,34 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             decimal finalY = boxList[0].position.y;
 
             bool drawNextBox = false;
+            bool layerButtonPressed = false;
+            bool reset = false;
 
-restart:    
+  
             for (int i = 0; i < boxList.Count; i++)
             {
-                if(i < 0) { i = 0; }//prevents the value of i from not matching a value in list
-                boxList[i].setEnabled(false);
-
-                int currentBoxIndex = boxList.IndexOf(boxList[i]);
-                Console.WriteLine(currentBoxIndex);
-                TaskCompletionSource<bool> canDrawNextBox = null;
-                TaskCompletionSource<bool> buttonClick = null;
-
+                TaskCompletionSource<bool> canDrawNextBox = new TaskCompletionSource<bool>();
+                TaskCompletionSource<bool> buttonClick = new TaskCompletionSource<bool>();
                 //On Click of 'Next Box'
                 nextBox.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
                     drawNextBox = true;
-             
+                    buttonClick?.TrySetResult(true);
                 });
 
                 //On Click of 'Next Layer'
                 nextLayer.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
-                
+                    drawNextBox = true;
+                    layerButtonPressed = true;
+                    buttonClick?.TrySetResult(true);
                 });
 
                 //On Click of 'resetButton'
                 resetButton.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
- 
+                    reset = true;
+                    buttonClick?.TrySetResult(true);
                 });
 
                 //On Click of 'lastBox'
@@ -251,10 +250,41 @@ restart:
 
                 });
 
-                await buttonClick.Task;
+                //detect new layer 
+                if(boxList[i].position.y > finalY)
+                {
+                    layerButtonPressed = false;
+                    drawNextBox = false;
+                    finalY = boxList[i].position.y;
+                }
 
-                await canDrawNextBox.Task;
+                //if flag is true continue drawing rest of layer
+                if (layerButtonPressed == true)
+                {
+                    drawNextBox = true;
+                    buttonClick?.TrySetResult(true);
+                }
 
+                await buttonClick.Task;//Wait for button pressed flag to be true
+
+                //reset if flag is true
+                if(reset == true)
+                {
+                    foreach(Mesh box in boxList) { box.setEnabled(false);  }
+                    i = -1;
+                    finalY = boxList[0].position.y;
+                    reset = false;
+                    continue;
+                }
+
+                //draw next box if flag is true
+                if(drawNextBox == true)
+                {
+                    canDrawNextBox.TrySetResult(true);
+                    drawNextBox = false;
+                }
+
+                await canDrawNextBox.Task;//Wait for draw next box flag to be true 
 
                 //animate
                 boxList[i].position.y = animH;
@@ -266,9 +296,9 @@ restart:
                 }
                 boxList[i].position.y = finalY;
             }
-
+      
         }
-          
+         
 
         public string ___guid { get; set; }
     }
