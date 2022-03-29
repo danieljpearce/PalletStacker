@@ -61,7 +61,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             )).ToEntity<SceneLoaderImportMeshEntity>();
             palletModel.meshes[0].name = "pallet";
             decimal palX = 1.2m, palZ = 1m, palY = 1m, palSelfY = .16m;//Pallet dimensions
-            decimal boxX = 0.3m, boxZ = 0.5m, boxY = 0.2m; //Box dimensions 
+            decimal boxX = 0.40m, boxZ = 0.25m, boxY = 0.15m; //Box dimensions 
 
             //add an arcRotateCamera to the scene
             var camera = new ArcRotateCamera(
@@ -102,22 +102,16 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             //A list is dynamic!
             List<Mesh> boxList = new List<Mesh>();
 
-            int xIter = -1;
-            int zIter = -1;
-            int yIter = -1;
             int boxCount = -1;
             //nested loops to draw and position boxes 
             for (decimal y = palSelfY; y < palY; y += boxY)
             {
-                yIter++;
-                zIter = -1;
+
                 for (decimal z = 0; z < palZ; z += boxZ)
                 {
-                    zIter++;
-                    xIter = -1;
+                 
                     for (decimal x = 0; x < palX; x += boxX)
                     {
-                        xIter++;
                         boxCount++;
                         //var alpha = flip ? 0.5m : 1m;     idk what this does , like why is alpha not just 1 value?
                         //flip = !flip;
@@ -125,7 +119,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                         var blue = new Color4(0, 0, 1, 1);
                         var green = new Color4(0, 1, 0, 1);
                         //fill 3D array
-                        boxList.Add(MeshBuilder.CreateBox($"box{xIter}{yIter}{zIter}",
+                        boxList.Add(MeshBuilder.CreateBox($"box",
                             new
                             {
                                 width = boxX,
@@ -203,7 +197,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             advancedTexture.addControl(lastBox);
             advancedTexture.addControl(lastLayer);
 
-            decimal speed = 0.03m;
+            decimal speed = 0.06m;
             decimal animH = (palY + palSelfY + 1.5m);
             decimal finalY = boxList[0].position.y;
 
@@ -216,8 +210,6 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
   
             for (int i = 0; i < boxList.Count; i++)
             {
-                
-                TaskCompletionSource<bool> canDrawNextBox = new TaskCompletionSource<bool>();
                 TaskCompletionSource<bool> buttonClick = new TaskCompletionSource<bool>();
                 //On Click of 'Next Box'
                 nextBox.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
@@ -258,7 +250,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 //detect new layer 
                 if(boxList[i].position.y != finalY)
                 {
-                    if(nextLayerButtonPressed == false) { speed = 0.03m; }
+                    deleteCurrentBox = false;
                     deleteCurrentLayer = false;
                     nextLayerButtonPressed = false;
                     drawNextBox = false;
@@ -268,7 +260,6 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 //if flag is true continue drawing rest of layer
                 if (nextLayerButtonPressed == true)
                 {
-                    speed = 0.08m;
                     drawNextBox = true;
                     buttonClick?.TrySetResult(true);
                 }
@@ -276,7 +267,6 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 //if flag is true continue deleting rest of layer
                 if (deleteCurrentLayer == true)
                 {
-                    deleteCurrentBox = true;
                     drawNextBox = false;
                     nextLayerButtonPressed = false;
                     buttonClick?.TrySetResult(true);
@@ -284,21 +274,26 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
 
                 await buttonClick.Task;//Wait for button pressed flag to be true
 
+                if (nextLayerButtonPressed == true) { speed = 0.10m; }
+                else { speed = 0.06m; }
+
                 //reset if flag is true
-                if(reset == true)
+                if (reset == true)
                 {
-                    foreach(Mesh box in boxList) { box.setEnabled(false);  }
-                    i = -1;
-                    finalY = boxList[0].position.y;
-                    reset = false;
-                    continue;
+                nextLayerButtonPressed = false;
+                foreach(Mesh box in boxList) { box.setEnabled(false); }
+                i = -1;
+                finalY = boxList[0].position.y;
+                reset = false;
+                continue;
                 }
 
                 //delete most recent box if flag is true
-                if(deleteCurrentBox == true)
+                if(deleteCurrentBox == true | deleteCurrentLayer == true)
                 {
                     if (i - 1 < 0)
                     {
+                        i = 0;
                         continue;
                     }
                     else
@@ -311,29 +306,21 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                     }
                 }
 
-   
-
                 //draw next box if flag is true
                 if(drawNextBox == true)
                 {
-                    canDrawNextBox.TrySetResult(true);
                     drawNextBox = false;
+                    //animate
+                    boxList[i].position.y = animH;
+                    boxList[i].setEnabled(true);
+                    while ((boxList[i].position.y > finalY))
+                    {
+                        boxList[i].position.y -= speed;
+                        await Task.Delay(1);
+                    }
+                    boxList[i].position.y = finalY;
                 }
-
-                await canDrawNextBox.Task;//Wait for draw next box flag to be true 
-
-                //animate
-                boxList[i].position.y = animH;
-                boxList[i].setEnabled(true);
-                while ((boxList[i].position.y > finalY))
-                {
-                    boxList[i].position.y -= speed;
-                    await Task.Delay(1);
-                }
-                boxList[i].position.y = finalY;
-               
             }
-      
         }
          
 
@@ -341,35 +328,3 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
     }
 
 }
-
-/* Sudo for less shit code
- * 
- * 
-finalY = boxList[0].position.y;
-for (box in boxlist){
-    
-    taskcompletion nextBox = false;
-    taskcompletion buttonClick = false;
-
-    OnClick NextBox{
-        drawNextBox = true;
-        buttonClick?.TrySetResult(true);
-    }
-    OnClick NextLayer{
-        drawNextLayer = true;
-        buttonClick?.TrySetResult(true);
-    }
-    
-    if(drawNextLayer == true){
-        buttonClick?.TrySetResult(true)//keep setting button click to true until layer is drawn
-    }
-    await buttonClick.task; //wait here for a button to be clicked
-    
-    if(drawNextBox == true){
-        nextBox?.TrySetResult(true);
-        drawNextBox = false;
-    }
-    await nextBox.Task; 
-    animateNextBox
-}
-*/
