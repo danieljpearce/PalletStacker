@@ -105,12 +105,12 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             int yIter = -1;
             int boxCount = -1;
             //nested loops to draw and position boxes 
-            for (decimal y = palSelfY; y+boxY <= palY+palSelfY; y += boxY)
+            for (decimal y = palSelfY; y + boxY <= palY + palSelfY; y += boxY)
             {
 
                 for (decimal z = 0; z < palZ; z += boxZ)
                 {
-                 
+
                     for (decimal x = 0; x < palX; x += boxX)
                     {
                         xIter++;
@@ -198,119 +198,132 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             advancedTexture.addControl(lastBox);
             advancedTexture.addControl(lastLayer);
 
-            decimal speed = 0.03m;
+            decimal speed = 0.06m;
             decimal animH = (palY + palSelfY + 1.5m);
             decimal finalY = boxList[0].position.y;
 
-            bool skipToNextLayer = false;
+            bool drawNextBox = false;
+            bool nextLayerButtonPressed = false;
             bool reset = false;
             bool deleteCurrentBox = false;
             bool deleteCurrentLayer = false;
 
-  
             for (int i = 0; i < boxList.Count; i++)
             {
-                if(i < 0) { i = 0; }//prevents the value of i from not matching a value in list
-                boxList[i].setEnabled(false);
-
-                int currentBoxIndex = boxList.IndexOf(boxList[i]);
-                Console.WriteLine(currentBoxIndex);
-                TaskCompletionSource<bool> canDrawNextBox = null;
-                TaskCompletionSource<bool> canDrawNextLayer = null;
-
+                TaskCompletionSource<bool> buttonClick = new TaskCompletionSource<bool>();
                 //On Click of 'Next Box'
                 nextBox.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
-                    skipToNextLayer = false;
-                    canDrawNextLayer?.TrySetResult(true);
-                    canDrawNextBox?.TrySetResult(true);
+                    drawNextBox = true;
+                    buttonClick?.TrySetResult(true);
                 });
 
                 //On Click of 'Next Layer'
                 nextLayer.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
-                    skipToNextLayer = true;
-                    canDrawNextLayer?.TrySetResult(true);
-                    canDrawNextBox?.TrySetResult(true);
+                    drawNextBox = true;
+                    nextLayerButtonPressed = true;
+                    buttonClick?.TrySetResult(true);
                 });
 
                 //On Click of 'resetButton'
                 resetButton.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
                     reset = true;
-                    skipToNextLayer = false;
-                    canDrawNextLayer?.TrySetResult(true);
-                    canDrawNextBox?.TrySetResult(false);
+                    buttonClick?.TrySetResult(true);
                 });
 
                 //On Click of 'lastBox'
                 lastBox.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
-                    reverse = true;
-                    skipToNextLayer = false;
-                    canDrawNextLayer?.TrySetResult(true);
-                    canDrawNextBox?.TrySetResult(false);
+                    deleteCurrentBox = true;
+                    buttonClick?.TrySetResult(true);
                 });
 
                 //On Click of 'lastLayer'
                 lastLayer.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
-                    //todo
+                    deleteCurrentLayer = true;
+                    buttonClick?.TrySetResult(true);
                 });
 
-                //check if this box belongs to a new layer
+                //detect new layer 
                 if (boxList[i].position.y != finalY)
                 {
-                    canDrawNextLayer = new TaskCompletionSource<bool>();
-                    await canDrawNextLayer.Task;
+                    deleteCurrentBox = false;
+                    deleteCurrentLayer = false;
+                    nextLayerButtonPressed = false;
+                    drawNextBox = false;
+                    finalY = boxList[i].position.y;
                 }
-                //set canDrawNextBox to true for rest of the layer
-                canDrawNextBox = new TaskCompletionSource<bool>();
-                if (skipToNextLayer == true)
-                {
-                    canDrawNextBox?.TrySetResult(true);
-                    speed = 0.08m;//speed up movement of boxes when skipping layers
-                }
-                else
-                {
-                    speed = 0.03m;
-                }
-                await canDrawNextBox.Task;//wait for permission to draw next box
 
-                if (reset == true)//if reset button has been pressed
+                //if flag is true continue drawing rest of layer
+                if (nextLayerButtonPressed == true)
                 {
-                    foreach (Mesh x in boxList) { x.setEnabled(false); }
+                    drawNextBox = true;
+                    buttonClick?.TrySetResult(true);
+                }
+
+                //if flag is true continue deleting rest of layer
+                if (deleteCurrentLayer == true)
+                {
+                    drawNextBox = false;
+                    nextLayerButtonPressed = false;
+                    buttonClick?.TrySetResult(true);
+                }
+
+                await buttonClick.Task;//Wait for button pressed flag to be true
+
+                if (nextLayerButtonPressed == true) { speed = 0.10m; }
+                else { speed = 0.06m; }
+
+                //reset if flag is true
+                if (reset == true)
+                {
+                    nextLayerButtonPressed = false;
+                    foreach (Mesh box in boxList) { box.setEnabled(false); }
+                    i = -1;
+                    finalY = boxList[0].position.y;
                     reset = false;
-                    goto restart;
-                }
-
-                if (reverse == true)//goes to the last box 
-                {
-                    i -= 2;
-                    reverse = false;
-                    if(removeLayer == true)
-                    {
-                        reverse = true;
-                    }
                     continue;
                 }
 
-                if (skipToNextLayer == true) { speed = 0.08m; }//makes the first box of the layer skip also move faster
-                finalY = boxList[i].position.y;
-
-                //render animation 
-                boxList[i].position.y = animH;
-                boxList[i].setEnabled(true);
-                while ((boxList[i].position.y > finalY))
+                //delete most recent box if flag is true
+                if (deleteCurrentBox == true | deleteCurrentLayer == true)
                 {
-                    boxList[i].position.y -= speed;
-                    await Task.Delay(1);
+                    if (i - 1 < 0)
+                    {
+                        i = 0;
+                        continue;
+                    }
+                    else
+                    {
+                        boxList[i - 1].setEnabled(false);
+                        i -= 2;
+                        if (i < -1) { i = -1; }//makes sure removing boxes cant set i to a negative value
+                        deleteCurrentBox = false;
+                        continue;
+                    }
                 }
-                boxList[i].position.y = finalY;//set position to finalY incase it overshot on the last iter
-            }
 
+                //draw next box if flag is true
+                if (drawNextBox == true)
+                {
+                    drawNextBox = false;
+                    //animate
+                    boxList[i].position.y = animH;
+                    boxList[i].setEnabled(true);
+                    while ((boxList[i].position.y > finalY))
+                    {
+                        boxList[i].position.y -= speed;
+                        await Task.Delay(1);
+                    }
+                    boxList[i].position.y = finalY;
+                }
+            }
         }
-          
+
+
 
         public string ___guid { get; set; }
     }
