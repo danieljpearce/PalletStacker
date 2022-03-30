@@ -105,14 +105,12 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             int yIter = -1;
             int boxCount = -1;
             //nested loops to draw and position boxes 
-            for (decimal y = palSelfY; y < palY; y += boxY)
+            for (decimal y = palSelfY; y+boxY <= palY+palSelfY; y += boxY)
             {
-                yIter++;
-                zIter = -1;
+
                 for (decimal z = 0; z < palZ; z += boxZ)
                 {
-                    zIter++;
-                    xIter = -1;
+                 
                     for (decimal x = 0; x < palX; x += boxX)
                     {
                         xIter++;
@@ -206,9 +204,10 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
 
             bool skipToNextLayer = false;
             bool reset = false;
-            bool reverse = false;
-            bool removeLayer = false;
-restart:    
+            bool deleteCurrentBox = false;
+            bool deleteCurrentLayer = false;
+
+  
             for (int i = 0; i < boxList.Count; i++)
             {
                 if(i < 0) { i = 0; }//prevents the value of i from not matching a value in list
