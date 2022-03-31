@@ -61,7 +61,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             )).ToEntity<SceneLoaderImportMeshEntity>();
             palletModel.meshes[0].name = "pallet";
             decimal palX = 1.2m, palZ = 1m, palY = 1m, palSelfY = .16m;//Pallet dimensions
-            decimal cylinderD = 0.075m, cylinderY = 0.11m; //Box dimensions 
+            decimal cylinderD = 0.2m, cylinderY = 0.2m; //Box dimensions 
 
             //add an arcRotateCamera to the scene
             var camera = new ArcRotateCamera(

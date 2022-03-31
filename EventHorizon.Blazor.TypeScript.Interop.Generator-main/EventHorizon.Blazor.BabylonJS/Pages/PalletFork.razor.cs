@@ -108,10 +108,10 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             for (decimal y = palSelfY; y + boxY <= palY + palSelfY; y += boxY)
             {
 
-                for (decimal z = 0; z < palZ; z += boxZ)
+                for (decimal z = 0; z + boxZ <= palZ; z += boxZ)
                 {
 
-                    for (decimal x = 0; x < palX; x += boxX)
+                    for (decimal x = 0; x + boxX <= palX; x += boxX)
                     {
                         xIter++;
                         boxCount++;
