@@ -12,6 +12,7 @@ using EventHorizon.Blazor.Interop.Callbacks;
 
 namespace EventHorizon.Blazor.BabylonJS.Pages
 {
+    using System.Text;
     using System.Threading;
 
     public partial class PalletFork : IDisposable
@@ -100,9 +101,6 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             //A list is dynamic!
             List<Mesh> boxList = new List<Mesh>();
 
-            int xIter = -1;
-            int zIter = -1;
-            int yIter = -1;
             int boxCount = -1;
             //nested loops to draw and position boxes 
             for (decimal y = palSelfY; y + boxY <= palY + palSelfY; y += boxY)
@@ -112,8 +110,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 {
 
                     for (decimal x = 0; x + boxX <= palX; x += boxX)
-                    {
-                        xIter++;
+                    { 
                         boxCount++;
                         //var alpha = flip ? 0.5m : 1m;     idk what this does , like why is alpha not just 1 value?
                         //flip = !flip;
@@ -121,7 +118,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                         var blue = new Color4(0, 0, 1, 1);
                         var green = new Color4(0, 1, 0, 1);
                         //fill 3D array
-                        boxList.Add(MeshBuilder.CreateBox($"box{xIter}{yIter}{zIter}",
+                        boxList.Add(MeshBuilder.CreateBox($"box",
                             new
                             {
                                 width = boxX,
@@ -146,6 +143,39 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                     }
                 }
             }
+
+
+            decimal[,] boxes = new decimal[boxList.Count, 6];
+            int b = 0;
+            foreach(var box in boxList) {
+                boxes[b, 0] = box.position.x;
+                boxes[b, 1] = box.position.y;
+                boxes[b, 2] = box.position.z;
+
+                boxes[b, 3] = boxX;
+                boxes[b, 4] = boxZ;
+                boxes[b, 5] = boxY;
+                b++;
+            }
+            foreach(var item in boxes)
+            {
+                Console.WriteLine(item.ToString());
+            }
+
+         
+            var stringBuilder = new StringBuilder();
+
+            foreach (var arrayElement in boxes)
+            {
+                stringBuilder.AppendLine(arrayElement.ToString());
+            }
+
+           System.IO.File.AppendAllText("array.txt", stringBuilder.ToString());
+
+           System.IO.File.WriteAllText("array.txt",  stringBuilder.ToString());
+
+
+
             var advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
             //var selection = new BABYLON.GUI.SelectionPanel("sp"); why doesnt this exist???????????
 
