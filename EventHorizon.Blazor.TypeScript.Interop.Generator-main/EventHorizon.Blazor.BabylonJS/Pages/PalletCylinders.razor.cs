@@ -139,7 +139,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                         box.position = new Vector3(x + (cylinderD / 2), y + (cylinderY / 2), z + (cylinderD / 2));
 
                         //Make box invisible
-                        //box.setEnabled(false);
+                        box.setEnabled(false);
 
 
                     }
@@ -197,7 +197,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             advancedTexture.addControl(nextBox);
             advancedTexture.addControl(lastBox);
             advancedTexture.addControl(lastLayer);
-            /*
+            
             decimal speed = 0.06m;
             decimal animH = (palY + palSelfY + 1.5m);
             decimal finalY = boxList[0].position.y;
@@ -320,7 +320,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                     }
                     boxList[i].position.y = finalY;
                 }
-            }*/
+            }
         }
          
 
