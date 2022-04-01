@@ -157,24 +157,12 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 boxes[b, 5] = boxY;
                 b++;
             }
-            foreach(var item in boxes)
-            {
-                Console.WriteLine(item.ToString());
-            }
 
-         
-            var stringBuilder = new StringBuilder();
+            boxList.Clear();//empty the list
 
-            foreach (var arrayElement in boxes)
-            {
-                stringBuilder.AppendLine(arrayElement.ToString());
-            }
+            //remake the box list based on box array
 
-           System.IO.File.AppendAllText("array.txt", stringBuilder.ToString());
-
-           System.IO.File.WriteAllText("array.txt",  stringBuilder.ToString());
-
-
+            
 
             var advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
             //var selection = new BABYLON.GUI.SelectionPanel("sp"); why doesnt this exist???????????
