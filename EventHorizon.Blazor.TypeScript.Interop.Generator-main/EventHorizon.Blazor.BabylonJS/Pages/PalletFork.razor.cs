@@ -95,6 +95,10 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 () => Task.Run(() => _scene.render(true, false))
             ));
 
+
+            var red = new Color4(1, 0, 0, 1);
+            var blue = new Color4(0, 0, 1, 1);
+            var green = new Color4(0, 1, 0, 1);
             //make 3D array with dimensions derived from box size
             //Mesh[,,] boxArray = new Mesh[Convert.ToInt32(palX / boxX),Convert.ToInt32(palY / boxY),Convert.ToInt32(palZ / boxZ)]; 
 
@@ -114,9 +118,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                         boxCount++;
                         //var alpha = flip ? 0.5m : 1m;     idk what this does , like why is alpha not just 1 value?
                         //flip = !flip;
-                        var red = new Color4(1, 0, 0, 1);
-                        var blue = new Color4(0, 0, 1, 1);
-                        var green = new Color4(0, 1, 0, 1);
+                        
                         //fill 3D array
                         boxList.Add(MeshBuilder.CreateBox($"box",
                             new
@@ -162,7 +164,24 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
 
             //remake the box list based on box array
 
-            
+            for (int k = 0; k < boxes.GetLength(0); k++)
+            {
+                boxList.Add(MeshBuilder.CreateBox($"box",
+                            new
+                            {
+                                width = boxes[k,3],
+                                height = boxes[k,5],
+                                depth = boxes[k,4],
+                                faceColors = new[] { green, green, green, green, blue, red }
+                            }, scene));
+
+                boxList[k].position = new Vector3(boxes[k,0], boxes[k,1], boxes[k,2]);
+                boxList[k].enableEdgesRendering();
+                boxList[k].edgesWidth = 1.0m;
+                boxList[k].edgesColor = new Color4(0, 0, 0, 1);
+                boxList[k].setEnabled(false);
+
+            }
 
             var advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
             //var selection = new BABYLON.GUI.SelectionPanel("sp"); why doesnt this exist???????????
