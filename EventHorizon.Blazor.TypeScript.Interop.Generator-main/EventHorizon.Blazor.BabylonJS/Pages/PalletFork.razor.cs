@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,16 +11,23 @@ using EventHorizon.Blazor.BabylonJS.Model;
 using EventHorizon.Blazor.Interop;
 using EventHorizon.Blazor.Interop;
 using EventHorizon.Blazor.Interop.Callbacks;
+using System.Text.Json;
+using m = System.Math;
 
 namespace EventHorizon.Blazor.BabylonJS.Pages
 {
-    using System.Text;
+    
     using System.Threading;
+    using System.Net.Http.Json;
+    using System.Net.Http;
+    using System.Runtime.Serialization.Formatters.Binary;
 
     public partial class PalletFork : IDisposable
     {
         private Engine _engine;
         private Scene _scene;
+
+        static readonly HttpClient client = new HttpClient();
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
@@ -54,6 +63,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             );
 
             //Load the pallet 
+
             var palletModel = (await SceneLoader.ImportMeshAsync(
                 "",
                 "http://localhost:5000/assets/",
@@ -62,7 +72,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             )).ToEntity<SceneLoaderImportMeshEntity>();
             palletModel.meshes[0].name = "pallet";
             decimal palX = 1.2m, palZ = 1m, palY = 1m, palSelfY = .16m;//Pallet dimensions
-            decimal boxX = 0.3m, boxZ = 0.5m, boxY = 0.2m; //Box dimensions 
+            decimal boxX = 0.11m, boxZ = 0.29m, boxY = 0.15m; //Box dimensions 
 
             //add an arcRotateCamera to the scene
             var camera = new ArcRotateCamera(
@@ -86,10 +96,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             _scene.activeCamera = camera;
             _engine = engine;
             var light = new HemisphericLight("ambientLight", new Vector3(0, 10, 0), scene);
-            var frameRate = 10;
 
-
-            bool flip = false;
             //palY = boxY; //temporary
             engine.runRenderLoop(new ActionCallback(
                 () => Task.Run(() => _scene.render(true, false))
@@ -99,90 +106,64 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             var red = new Color4(1, 0, 0, 1);
             var blue = new Color4(0, 0, 1, 1);
             var green = new Color4(0, 1, 0, 1);
-            //make 3D array with dimensions derived from box size
-            //Mesh[,,] boxArray = new Mesh[Convert.ToInt32(palX / boxX),Convert.ToInt32(palY / boxY),Convert.ToInt32(palZ / boxZ)]; 
 
-            //A list is dynamic!
+
+
+            //goes z,x,y not x,y,z
+            double bWidth = Convert.ToDouble(boxX);
+            double bLength = Convert.ToDouble(boxZ);
+            double bHeight = Convert.ToDouble(boxY);
+
+            var dubPalX = Convert.ToDouble(palX);
+            var dubPalY = Convert.ToDouble(palY);
+            var dubPalZ = Convert.ToDouble(palZ);
+
+            double[] item = { bWidth, bLength, bHeight };
+            double[] space = { dubPalX, dubPalY, dubPalZ };
+
+
+            List<rectPos> positions = stairsFillAlg.Pack(item, space);
+
             List<Mesh> boxList = new List<Mesh>();
-
-            int boxCount = -1;
-            //nested loops to draw and position boxes 
-            for (decimal y = palSelfY; y + boxY <= palY + palSelfY; y += boxY)
+            //List<rectPos> positions = standardFillAlg.Pack(item, space);
+            //remake the box list based on posiions
+            decimal layerHeight = 0;
+            var layers = m.Round(palY / boxY);
+            
+            for (int i = 0; i < layers; i++)
             {
-
-                for (decimal z = 0; z + boxZ <= palZ; z += boxZ)
+                for (int k = 0; k < positions.Count; k++)
                 {
+                    double width = positions[k].endPos[0] - positions[k].startPos[0];
+                    double height = positions[k].endPos[2] - positions[k].startPos[2];
+                    double depth = positions[k].endPos[1] - positions[k].startPos[1];
 
-                    for (decimal x = 0; x + boxX <= palX; x += boxX)
-                    { 
-                        boxCount++;
-                        //var alpha = flip ? 0.5m : 1m;     idk what this does , like why is alpha not just 1 value?
-                        //flip = !flip;
-                        
-                        //fill 3D array
-                        boxList.Add(MeshBuilder.CreateBox($"box",
-                            new
-                            {
-                                width = boxX,
-                                height = boxY,
-                                depth = boxZ,
-                                faceColors = new[] { green, green, green, green, blue, red }
-                            }, scene));
-                        var box = boxList[boxCount];
+                    boxList.Add(MeshBuilder.CreateBox($"box",
+                                new
+                                {
+                                    width = width,
+                                    height = height,
+                                    depth = depth,
+                                    faceColors = new[] { green, green, green, green, blue, red }
+                                }, scene));
 
-                        //Add edges to box
-                        box.enableEdgesRendering();
-                        box.edgesWidth = 1.0m;
-                        box.edgesColor = new Color4(0, 0, 0, 1);
+                    boxList.Last().position = new Vector3(Convert.ToDecimal(positions[k].startPos[0] + (width / 2)),
+                                                    Convert.ToDecimal(positions[k].startPos[2] + (height / 2)) + palSelfY + layerHeight,
+                                                    Convert.ToDecimal(positions[k].startPos[1] + (depth / 2)));
+                          
 
-                        //move box to its final position
-                        box.position = new Vector3(x + (boxX / 2), y + (boxY / 2), z + (boxZ / 2));
+                    boxList.Last().enableEdgesRendering();
+                    boxList.Last().edgesWidth = 1.0m;
+                    boxList.Last().edgesColor = new Color4(0, 0, 0, 1);
+                    boxList.Last().setEnabled(true);
 
-                        //Make box invisible
-                        box.setEnabled(false);
-
-
-                    }
                 }
+                layerHeight += boxY;
             }
 
+   
 
-            decimal[,] boxes = new decimal[boxList.Count, 6];
-            int b = 0;
-            foreach(var box in boxList) {
-                boxes[b, 0] = box.position.x;
-                boxes[b, 1] = box.position.y;
-                boxes[b, 2] = box.position.z;
-
-                boxes[b, 3] = boxX;
-                boxes[b, 4] = boxZ;
-                boxes[b, 5] = boxY;
-                b++;
-            }
-
-            boxList.Clear();//empty the list
-
-            //remake the box list based on box array
-
-            for (int k = 0; k < boxes.GetLength(0); k++)
-            {
-                boxList.Add(MeshBuilder.CreateBox($"box",
-                            new
-                            {
-                                width = boxes[k,3],
-                                height = boxes[k,5],
-                                depth = boxes[k,4],
-                                faceColors = new[] { green, green, green, green, blue, red }
-                            }, scene));
-
-                boxList[k].position = new Vector3(boxes[k,0], boxes[k,1], boxes[k,2]);
-                boxList[k].enableEdgesRendering();
-                boxList[k].edgesWidth = 1.0m;
-                boxList[k].edgesColor = new Color4(0, 0, 0, 1);
-                boxList[k].setEnabled(false);
-
-            }
-
+            /*
             var advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
             //var selection = new BABYLON.GUI.SelectionPanel("sp"); why doesnt this exist???????????
 
@@ -244,7 +225,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             bool reset = false;
             bool deleteCurrentBox = false;
             bool deleteCurrentLayer = false;
-
+            
             for (int i = 0; i < boxList.Count; i++)
             {
                 TaskCompletionSource<bool> buttonClick = new TaskCompletionSource<bool>();
@@ -357,9 +338,8 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                     }
                     boxList[i].position.y = finalY;
                 }
-            }
+            }*/
         }
-
 
 
         public string ___guid { get; set; }

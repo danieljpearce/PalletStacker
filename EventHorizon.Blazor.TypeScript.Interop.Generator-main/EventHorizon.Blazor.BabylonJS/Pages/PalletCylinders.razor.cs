@@ -212,14 +212,14 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             {
                 TaskCompletionSource<bool> buttonClick = new TaskCompletionSource<bool>();
                 //On Click of 'Next Box'
-                nextBox.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
+                nextBox.onPointerClickObservable.add(async (_,_) =>
                 {
                     drawNextBox = true;
                     buttonClick?.TrySetResult(true);
                 });
 
                 //On Click of 'Next Layer'
-                nextLayer.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
+                nextLayer.onPointerClickObservable.add(async (_,_) =>
                 {
                     drawNextBox = true;
                     nextLayerButtonPressed = true;
@@ -227,21 +227,21 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 });
 
                 //On Click of 'resetButton'
-                resetButton.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
+                resetButton.onPointerClickObservable.add(async (_,_) =>
                 {
                     reset = true;
                     buttonClick?.TrySetResult(true);
                 });
 
                 //On Click of 'lastBox'
-                lastBox.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
+                lastBox.onPointerClickObservable.add(async (_,_) =>
                 {
                     deleteCurrentBox = true;
                     buttonClick?.TrySetResult(true);
                 });
 
                 //On Click of 'lastLayer'
-                lastLayer.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
+                lastLayer.onPointerClickObservable.add(async (_,_) =>
                 {
                     deleteCurrentLayer = true;
                     buttonClick?.TrySetResult(true);
