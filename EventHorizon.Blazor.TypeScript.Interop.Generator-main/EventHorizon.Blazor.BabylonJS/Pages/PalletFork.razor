@@ -1,11 +1,71 @@
 @page "/"
 
-<h1>Pallet Stacker</h1>
-
 <div>
-    <canvas id="game-window" style="width:100%"></canvas>
+    <EditForm Model="@boxDimensions" OnSubmit="@SubmitEventHandler">
+        <DataAnnotationsValidator />
+        <div class="row">
+            <div class="col-md-6"> 
+                <div class="row" style="margin-top:10px">
+                    <div class="col-md-2">
+                        <label for="Box Width">Box Width</label>
+                        <input type="text" class="form-control" id="boxWidth" @bind-value="@boxDimensions.boxX"/>
+                        <ValidationMessage For="@(()=>boxDimensions.boxX)" />
+                    </div>
+        
+                    <div class="col-md-2">
+                        <label for="Box Height">Box Height</label>
+                        <input type="text" class="form-control" id="boxHeight" @bind-value="@boxDimensions.boxY"/>
+                        <ValidationMessage For="@(()=>boxDimensions.boxY)" />
+                    </div>
+
+                    
+                    <div class="col-md-2">
+                        <label for="Box Length">Box Length</label>
+                        <input type="text" class="form-control" id="boxLength" @bind-value="@boxDimensions.boxZ"/>
+                        <ValidationMessage For="@(()=>boxDimensions.boxZ)" />
+                    </div>
+                    <button type="submit" class="btn btn-info" Style="margin-top:10px">Generate Pallet</button>
+        
+              </div>
+            </div>
+        </div>
+             @if (displayValidationErrorMessages)
+            {
+                <div class="col-md-4" style="margin-top:10px">
+                    <label>Validation Messages: </label>
+                    <ValidationSummary />
+                </div>
+            }
+        </EditForm>
 </div>
+<canvas id="game-window" style="width:100%"></canvas>
 
-<code>
+@code {
+    boxDimensions boxDimensions = new boxDimensions();
+    EditContext context;
 
-</code>
+
+    protected override Task OnInitializedAsync()
+    {
+        context = new EditContext(boxDimensions);
+        return base.OnInitializedAsync();
+    }
+
+    bool displayValidationErrorMessages = false;
+    bool successfulFormInput = false;
+
+    private void SubmitEventHandler(EditContext context)
+    {
+        if (context.Validate())
+        {
+            bool displayValidationErrorMessages = false;
+            bool successfulFormInput = true;
+        }
+        else
+        {
+              bool displayValidationErrorMessages = true;
+             bool successfulFormInput = false;
+        }
+    }
+  
+}

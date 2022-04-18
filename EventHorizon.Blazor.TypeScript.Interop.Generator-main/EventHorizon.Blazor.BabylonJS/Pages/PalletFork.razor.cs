@@ -21,13 +21,14 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
     using System.Net.Http.Json;
     using System.Net.Http;
     using System.Runtime.Serialization.Formatters.Binary;
+    using Microsoft.AspNetCore.Components.Forms;
 
     public partial class PalletFork : IDisposable
     {
         private Engine _engine;
         private Scene _scene;
-
-        static readonly HttpClient client = new HttpClient();
+     
+      
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
