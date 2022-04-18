@@ -41,6 +41,7 @@
 <canvas id="game-window" style="width:100%"></canvas>
 
 @code {
+
     boxDimensions boxDimensions = new boxDimensions();
     EditContext context;
 
@@ -53,19 +54,35 @@
 
     bool displayValidationErrorMessages = false;
     bool successfulFormInput = false;
+    bool firstSubmit = true;
+
     TaskCompletionSource<bool> formSubmit = new TaskCompletionSource<bool>();
-    private void SubmitEventHandler(EditContext context)
+    private async void SubmitEventHandler(EditContext context)
     {
+
         if (context.Validate())
         {
-            formSubmit?.TrySetResult(true);
-            bool displayValidationErrorMessages = false;
-            bool successfulFormInput = true;
+            if(firstSubmit == true)
+            {
+                firstSubmit = false;
+                formSubmit?.TrySetResult(true);
+                displayValidationErrorMessages = false;
+                successfulFormInput = true;
+                Console.WriteLine("First Submit");
+            }
+            else
+            {
+                formSubmit?.TrySetResult(true);
+                displayValidationErrorMessages = false;
+                successfulFormInput = true;
+                  Console.WriteLine("Not First Submit");
+            }
+
         }
         else
         {
-              bool displayValidationErrorMessages = true;
-             bool successfulFormInput = false;
+            displayValidationErrorMessages = true;
+            successfulFormInput = false;
         }
     }
   

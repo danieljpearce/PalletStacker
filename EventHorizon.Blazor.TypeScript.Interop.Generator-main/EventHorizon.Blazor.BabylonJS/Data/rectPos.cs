@@ -1,4 +1,4 @@
-namespace EventHorizon.Blazor.BabylonJS.Pages
+namespace EventHorizon.Blazor.BabylonJS.Data
 {
     public class rectPos
     {

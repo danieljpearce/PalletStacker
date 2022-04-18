@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Linq;
 
-namespace EventHorizon.Blazor.BabylonJS.Pages
+namespace EventHorizon.Blazor.BabylonJS.Data
 {
     /// <summary>
     /// The standard fill algorithm uses approaches developed by GOAL (Gower optimal algorithms Ltd) to produce in most cases as optimum answer for 

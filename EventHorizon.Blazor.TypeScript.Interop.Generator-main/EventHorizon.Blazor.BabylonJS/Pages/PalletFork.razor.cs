@@ -8,11 +8,13 @@ using System.Threading.Tasks;
 using BABYLON;
 using BABYLON.GUI;
 using EventHorizon.Blazor.BabylonJS.Model;
+using EventHorizon.Blazor.BabylonJS.Data;
 using EventHorizon.Blazor.Interop;
 using EventHorizon.Blazor.Interop;
 using EventHorizon.Blazor.Interop.Callbacks;
 using System.Text.Json;
 using m = System.Math;
+
 
 namespace EventHorizon.Blazor.BabylonJS.Pages
 {
@@ -22,13 +24,13 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
     using System.Net.Http;
     using System.Runtime.Serialization.Formatters.Binary;
     using Microsoft.AspNetCore.Components.Forms;
-
+    
     public partial class PalletFork : IDisposable
     {
         private Engine _engine;
         private Scene _scene;
      
-      
+    
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
@@ -72,10 +74,8 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 scene
             )).ToEntity<SceneLoaderImportMeshEntity>();
             palletModel.meshes[0].name = "pallet";
-            await formSubmit.Task;
-            decimal palX = 1.2m, palZ = 1m, palY = 1m, palSelfY = .16m;//Pallet dimensions
-            decimal boxX = boxDimensions.boxX, boxZ = boxDimensions.boxZ, boxY = boxDimensions.boxY; //Box dimensions 
 
+            decimal palX = 1.2m, palZ = 1m, palY = 1m, palSelfY = .16m;//Pallet dimensions
             //add an arcRotateCamera to the scene
             var camera = new ArcRotateCamera(
                 "camera",
@@ -104,104 +104,16 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 () => Task.Run(() => _scene.render(true, false))
             ));
 
+            await formSubmit.Task;
 
-            var red = new Color4(1, 0, 0, 1);
-            var blue = new Color4(0, 0, 1, 1);
-            var green = new Color4(0, 1, 0, 1);
+            decimal[] boxDim = { boxDimensions.boxX, boxDimensions.boxZ, boxDimensions.boxY };
+            decimal[] palletDim = { palX, palY, palZ, palSelfY};
+            bool packType = false;
+            List<Mesh> boxList = generatePallet.generateBoxList(boxDim, palletDim, packType, scene);
+           
+            
 
-
-
-            //goes z,x,y not x,y,z
-            double bWidth = Convert.ToDouble(boxX);
-            double bLength = Convert.ToDouble(boxZ);
-            double bHeight = Convert.ToDouble(boxY);
-
-            var dubPalX = Convert.ToDouble(palX);
-            var dubPalY = Convert.ToDouble(palY);
-            var dubPalZ = Convert.ToDouble(palZ);
-
-            double[] item = { bWidth, bLength, bHeight };
-            double[] space = { dubPalX, dubPalY, dubPalZ };
-
-            double[] itemF = { bLength, bWidth, bHeight };
-
-            List<rectPos> positions = stairsFillAlg.Pack(item, space);
-            List<rectPos> positionsF = stairsFillAlg.Pack(itemF, space);
-
-            List<Mesh> boxList = new List<Mesh>();
-            //List<rectPos> positionsF = standardFillAlg.Pack(itemF, space);
-            //List<rectPos> positions = standardFillAlg.Pack(item, space);
-            //remake the box list based on positions
-            decimal layerHeight = 0;
-            var layers = m.Round(palY / boxY);
-            bool flip = true;
-            for (int i = 0; i < layers; i++)
-            {
-                if (flip == true)
-                {
-                    flip = !flip;
-                    for (int k = 0; k < positions.Count; k++)
-                    {
-                        double width = positions[k].endPos[0] - positions[k].startPos[0];
-                        double height = positions[k].endPos[2] - positions[k].startPos[2];
-                        double depth = positions[k].endPos[1] - positions[k].startPos[1];
-
-                        boxList.Add(MeshBuilder.CreateBox($"box",
-                                    new
-                                    {
-                                        width = width,
-                                        height = height,
-                                        depth = depth,
-                                        faceColors = new[] { green, green, green, green, blue, red }
-                                    }, scene));
-
-                        boxList.Last().position = new Vector3(Convert.ToDecimal(positions[k].startPos[0] + (width / 2)),
-                                                            Convert.ToDecimal(positions[k].startPos[2] + (height / 2)) + palSelfY + layerHeight,
-                                                            Convert.ToDecimal(positions[k].startPos[1] + (depth / 2)));
-
-
-                        boxList.Last().enableEdgesRendering();
-                        boxList.Last().edgesWidth = 1.0m;
-                        boxList.Last().edgesColor = new Color4(0, 0, 0, 1);
-                        boxList.Last().setEnabled(true);
-
-                    }
-                }
-                else
-                {
-                    flip = !flip;
-                    for (int k = 0; k < positions.Count; k++)
-                    {
-                        double width = positionsF[k].endPos[0] - positionsF[k].startPos[0];
-                        double height = positionsF[k].endPos[2] - positionsF[k].startPos[2];
-                        double depth = positionsF[k].endPos[1] - positionsF[k].startPos[1];
-
-                        boxList.Add(MeshBuilder.CreateBox($"box",
-                                    new
-                                    {
-                                        width = width,
-                                        height = height,
-                                        depth = depth,
-                                        faceColors = new[] { green, green, green, green, blue, red }
-                                    }, scene));
-
-                        boxList.Last().position = new Vector3(Convert.ToDecimal(positionsF[k].startPos[0] + (width / 2)),
-                                                            Convert.ToDecimal(positionsF[k].startPos[2] + (height / 2)) + palSelfY + layerHeight,
-                                                            Convert.ToDecimal(positionsF[k].startPos[1] + (depth / 2)));
-
-
-                        boxList.Last().enableEdgesRendering();
-                        boxList.Last().edgesWidth = 1.0m;
-                        boxList.Last().edgesColor = new Color4(0, 0, 0, 1);
-                        boxList.Last().setEnabled(true);
-
-                    }
-                }
-                layerHeight += boxY;
-            }
-
-   
-
+    
             
             var advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
             //var selection = new BABYLON.GUI.SelectionPanel("sp"); why doesnt this exist???????????

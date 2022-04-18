@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using m = System.Math;
 
-namespace EventHorizon.Blazor.BabylonJS.Pages
+namespace EventHorizon.Blazor.BabylonJS.Data
 {
     /// <summary>
     /// 
