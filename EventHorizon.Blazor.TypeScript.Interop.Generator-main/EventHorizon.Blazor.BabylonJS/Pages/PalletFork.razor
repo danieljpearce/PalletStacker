@@ -53,11 +53,12 @@
 
     bool displayValidationErrorMessages = false;
     bool successfulFormInput = false;
-
+    TaskCompletionSource<bool> formSubmit = new TaskCompletionSource<bool>();
     private void SubmitEventHandler(EditContext context)
     {
         if (context.Validate())
         {
+            formSubmit?.TrySetResult(true);
             bool displayValidationErrorMessages = false;
             bool successfulFormInput = true;
         }
