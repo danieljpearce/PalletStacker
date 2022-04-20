@@ -180,7 +180,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
 
             for (int i = 0; i < boxList.Count; i++)
             {
-                TaskCompletionSource<bool> buttonClick = new TaskCompletionSource<bool>();
+                buttonClick = new TaskCompletionSource<bool>();
                 //On Click of 'Next Box'
                 nextBox.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
@@ -244,6 +244,13 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
 
                 await buttonClick.Task;//Wait for button pressed flag to be true
 
+                if(regen == true)
+                {
+                    boxDim = new[] { boxDimensions.boxX, boxDimensions.boxZ, boxDimensions.boxY };
+                    packType = boxDimensions.useStaircase;
+                    boxList = generatePallet.regenPallet(boxList,boxDim, palletDim, packType, scene);
+                }
+
                 if (nextLayerButtonPressed == true) { speed = 0.10m; }
                 else { speed = 0.06m; }
 
@@ -293,13 +300,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             }
         }
 
-        public List<Mesh> regenPallet(List<Mesh> boxList, decimal[] boxDimensions, decimal[] palletDimensions, bool packType, Scene scene)
-        {
-            boxList.Clear();
-            boxList = generatePallet.generateBoxList(boxDimensions, palletDimensions, packType, scene);
-            return boxList;
-        }
-
+   
 
         public string ___guid { get; set; }
     }

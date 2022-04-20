@@ -114,4 +114,12 @@ public class generatePallet
         return boxList;
     }
 
+    static public List<Mesh> regenPallet(List<Mesh> boxList, decimal[] boxDimensions, decimal[] palletDimensions, bool packType, Scene scene)
+    {
+        foreach (Mesh box in boxList) { box.dispose(); }
+        boxList = generateBoxList(boxDimensions, palletDimensions, packType, scene);
+        return boxList;
+    }
+
+
 }

@@ -58,20 +58,25 @@
     bool displayValidationErrorMessages = false;
     bool successfulFormInput = false;
     bool firstSubmit = true;
+    bool regen = false;
 
     TaskCompletionSource<bool> formSubmit = new TaskCompletionSource<bool>();
+    TaskCompletionSource<bool> buttonClick = new TaskCompletionSource<bool>();
     private async void SubmitEventHandler(EditContext context)
     {
-
+        
         if (context.Validate())
         {
-            
-        firstSubmit = false;
-        formSubmit?.TrySetResult(true);
-        displayValidationErrorMessages = false;
-        successfulFormInput = true;
-        Console.WriteLine("First Submit");
-            
+            formSubmit?.TrySetResult(true);
+            displayValidationErrorMessages = false;
+            successfulFormInput = true;
+            if(firstSubmit == false)
+            {
+                regen = true;
+                buttonClick?.TrySetResult(true);
+                regen = false;
+            }
+            firstSubmit = false;
         }
         else
         {
