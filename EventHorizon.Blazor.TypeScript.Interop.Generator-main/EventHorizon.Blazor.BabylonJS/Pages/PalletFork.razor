@@ -1,4 +1,5 @@
 @page "/"
+@using EventHorizon.Blazor.BabylonJS.Data
 
 <div>
     <EditForm Model="@boxDimensions" OnSubmit="@SubmitEventHandler">
@@ -10,18 +11,20 @@
                         <label for="Box Width">Box Width</label>
                         <input type="text" class="form-control" id="boxWidth" @bind-value="@boxDimensions.boxX"/>
                         <ValidationMessage For="@(()=>boxDimensions.boxX)" />
-                    </div>
-        
+                    </div>       
                     <div class="col-md-2">
                         <label for="Box Height">Box Height</label>
                         <input type="text" class="form-control" id="boxHeight" @bind-value="@boxDimensions.boxY"/>
                         <ValidationMessage For="@(()=>boxDimensions.boxY)" />
-                    </div>
-
-                    
+                    </div>    
                     <div class="col-md-2">
                         <label for="Box Length">Box Length</label>
                         <input type="text" class="form-control" id="boxLength" @bind-value="@boxDimensions.boxZ"/>
+                        <ValidationMessage For="@(()=>boxDimensions.boxZ)" />
+                    </div>
+                    <div class="col-md-2">
+                        <label for="Staircase Algo">Staircase Algo</label>
+                        <input type="checkbox" class="form-control" id="useStaircase" @bind-value="@boxDimensions.useStaircase"/>
                         <ValidationMessage For="@(()=>boxDimensions.boxZ)" />
                     </div>
                     <button type="submit" class="btn btn-info" Style="margin-top:10px">Generate Pallet</button>
@@ -62,22 +65,13 @@
 
         if (context.Validate())
         {
-            if(firstSubmit == true)
-            {
-                firstSubmit = false;
-                formSubmit?.TrySetResult(true);
-                displayValidationErrorMessages = false;
-                successfulFormInput = true;
-                Console.WriteLine("First Submit");
-            }
-            else
-            {
-                formSubmit?.TrySetResult(true);
-                displayValidationErrorMessages = false;
-                successfulFormInput = true;
-                  Console.WriteLine("Not First Submit");
-            }
-
+            
+        firstSubmit = false;
+        formSubmit?.TrySetResult(true);
+        displayValidationErrorMessages = false;
+        successfulFormInput = true;
+        Console.WriteLine("First Submit");
+            
         }
         else
         {

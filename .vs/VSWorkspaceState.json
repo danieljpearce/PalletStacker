@@ -1,9 +1,7 @@
 {
   "ExpandedNodes": [
-    "",
-    "\\EventHorizon.Blazor.TypeScript.Interop.Generator-main",
-    "\\EventHorizon.Blazor.TypeScript.Interop.Generator-main\\EventHorizon.Blazor.BabylonJS"
+    ""
   ],
-  "SelectedNode": "\\EventHorizon.Blazor.TypeScript.Interop.Generator-main\\PalletStacker.sln",
+  "SelectedNode": "\\PalletStacker.sln",
   "PreviewInSolutionExplorer": false
 }

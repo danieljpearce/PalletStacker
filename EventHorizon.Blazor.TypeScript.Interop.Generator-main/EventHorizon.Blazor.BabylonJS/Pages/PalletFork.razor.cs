@@ -18,19 +18,19 @@ using m = System.Math;
 
 namespace EventHorizon.Blazor.BabylonJS.Pages
 {
-    
+
     using System.Threading;
     using System.Net.Http.Json;
     using System.Net.Http;
     using System.Runtime.Serialization.Formatters.Binary;
     using Microsoft.AspNetCore.Components.Forms;
-    
+
     public partial class PalletFork : IDisposable
     {
         private Engine _engine;
         private Scene _scene;
-     
-    
+
+
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
@@ -107,14 +107,15 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             await formSubmit.Task;
 
             decimal[] boxDim = { boxDimensions.boxX, boxDimensions.boxZ, boxDimensions.boxY };
-            decimal[] palletDim = { palX, palY, palZ, palSelfY};
-            bool packType = false;
-            List<Mesh> boxList = generatePallet.generateBoxList(boxDim, palletDim, packType, scene);
-           
-            
+            decimal[] palletDim = { palX, palY, palZ, palSelfY };
+            bool packType = boxDimensions.useStaircase;
 
-    
-            
+            List<Mesh> boxList = generatePallet.generateBoxList(boxDim, palletDim, packType, scene);
+
+
+
+
+
             var advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
             //var selection = new BABYLON.GUI.SelectionPanel("sp"); why doesnt this exist???????????
 
@@ -176,7 +177,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             bool reset = false;
             bool deleteCurrentBox = false;
             bool deleteCurrentLayer = false;
-            
+
             for (int i = 0; i < boxList.Count; i++)
             {
                 TaskCompletionSource<bool> buttonClick = new TaskCompletionSource<bool>();
@@ -290,6 +291,13 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                     boxList[i].position.y = finalY;
                 }
             }
+        }
+
+        public List<Mesh> regenPallet(List<Mesh> boxList, decimal[] boxDimensions, decimal[] palletDimensions, bool packType, Scene scene)
+        {
+            boxList.Clear();
+            boxList = generatePallet.generateBoxList(boxDimensions, palletDimensions, packType, scene);
+            return boxList;
         }
 
 

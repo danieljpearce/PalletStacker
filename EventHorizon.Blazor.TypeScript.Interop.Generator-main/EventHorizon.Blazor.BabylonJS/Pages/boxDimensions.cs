@@ -16,4 +16,6 @@ class boxDimensions
     [Required(ErrorMessage = "Box Width Required")]
     [RegularExpression(@"^\d+(\.\d{1,2})?$")]
     public decimal boxZ { get; set; }
+
+    public bool useStaircase { get; set; } 
 }

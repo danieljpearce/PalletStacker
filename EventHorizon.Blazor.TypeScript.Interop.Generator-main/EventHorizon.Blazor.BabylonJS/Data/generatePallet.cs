@@ -113,4 +113,5 @@ public class generatePallet
         }
         return boxList;
     }
+
 }
