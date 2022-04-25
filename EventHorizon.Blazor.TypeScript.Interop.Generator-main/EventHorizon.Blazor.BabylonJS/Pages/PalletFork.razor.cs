@@ -75,6 +75,8 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             )).ToEntity<SceneLoaderImportMeshEntity>();
             palletModel.meshes[0].name = "pallet";
 
+            Pallet Pallet = new Pallet();
+
             decimal palX = 1.2m, palZ = 1m, palY = 1m, palSelfY = .16m;//Pallet dimensions
             //add an arcRotateCamera to the scene
             var camera = new ArcRotateCamera(
@@ -110,11 +112,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             decimal[] palletDim = { palX, palY, palZ, palSelfY };
             bool packType = boxDimensions.useStaircase;
 
-            List<Mesh> boxList = generatePallet.generateBoxList(boxDim, palletDim, packType, scene);
-
-
-
-
+            List<Mesh> boxList = Pallet.generateBoxList(boxDim, palletDim, packType, scene);
 
             var advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
             //var selection = new BABYLON.GUI.SelectionPanel("sp"); why doesnt this exist???????????
@@ -168,134 +166,48 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             advancedTexture.addControl(lastBox);
             advancedTexture.addControl(lastLayer);
 
-            decimal speed = 0.06m;
-            decimal animH = (palY + palSelfY + 1.5m);
-            decimal finalY = boxList[0].position.y;
+            Pallet.speed = 0.06m;
+            Pallet.animH = (palY + palSelfY + 1.5m);
+            Pallet.finalY = boxList[0].position.y;
 
-            bool drawNextBox = false;
-            bool nextLayerButtonPressed = false;
-            bool reset = false;
-            bool deleteCurrentBox = false;
-            bool deleteCurrentLayer = false;
-
-            for (int i = 0; i < boxList.Count; i++)
+            for (Pallet.index = 0; Pallet.index < boxList.Count; Pallet.index++)
             {
-                buttonClick = new TaskCompletionSource<bool>();
                 //On Click of 'Next Box'
                 nextBox.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
-                    drawNextBox = true;
-                    buttonClick?.TrySetResult(true);
+                    boxList = await Pallet.addNextBox(boxList);
                 });
 
                 //On Click of 'Next Layer'
                 nextLayer.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
-                    drawNextBox = true;
-                    nextLayerButtonPressed = true;
-                    buttonClick?.TrySetResult(true);
+                    boxList = await Pallet.addNextLayer(boxList);
                 });
 
                 //On Click of 'resetButton'
                 resetButton.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
-                    reset = true;
-                    buttonClick?.TrySetResult(true);
+                
                 });
 
                 //On Click of 'lastBox'
                 lastBox.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
-                    deleteCurrentBox = true;
-                    buttonClick?.TrySetResult(true);
+               
                 });
 
                 //On Click of 'lastLayer'
                 lastLayer.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
-                    deleteCurrentLayer = true;
-                    buttonClick?.TrySetResult(true);
+                 
                 });
 
-                //detect new layer 
-                if (boxList[i].position.y != finalY)
-                {
-                    deleteCurrentBox = false;
-                    deleteCurrentLayer = false;
-                    nextLayerButtonPressed = false;
-                    drawNextBox = false;
-                    finalY = boxList[i].position.y;
-                }
-
-                //if flag is true continue drawing rest of layer
-                if (nextLayerButtonPressed == true)
-                {
-                    drawNextBox = true;
-                    buttonClick?.TrySetResult(true);
-                }
-
-                //if flag is true continue deleting rest of layer
-                if (deleteCurrentLayer == true)
-                {
-                    drawNextBox = false;
-                    nextLayerButtonPressed = false;
-                    buttonClick?.TrySetResult(true);
-                }
-
-                await buttonClick.Task;//Wait for button pressed flag to be true
 
                 if(regen == true)
                 {
                     boxDim = new[] { boxDimensions.boxX, boxDimensions.boxZ, boxDimensions.boxY };
                     packType = boxDimensions.useStaircase;
-                    boxList = generatePallet.regenPallet(boxList,boxDim, palletDim, packType, scene);
-                }
-
-                if (nextLayerButtonPressed == true) { speed = 0.10m; }
-                else { speed = 0.06m; }
-
-                //reset if flag is true
-                if (reset == true)
-                {
-                    nextLayerButtonPressed = false;
-                    foreach (Mesh box in boxList) { box.setEnabled(false); }
-                    i = -1;
-                    finalY = boxList[0].position.y;
-                    reset = false;
-                    continue;
-                }
-
-                //delete most recent box if flag is true
-                if (deleteCurrentBox == true | deleteCurrentLayer == true)
-                {
-                    if (i - 1 < 0)
-                    {
-                        i = 0;
-                        continue;
-                    }
-                    else
-                    {
-                        boxList[i - 1].setEnabled(false);
-                        i -= 2;
-                        if (i < -1) { i = -1; }//makes sure removing boxes cant set i to a negative value
-                        deleteCurrentBox = false;
-                        continue;
-                    }
-                }
-
-                //draw next box if flag is true
-                if (drawNextBox == true)
-                {
-                    drawNextBox = false;
-                    //animate
-                    boxList[i].position.y = animH;
-                    boxList[i].setEnabled(true);
-                    while ((boxList[i].position.y > finalY))
-                    {
-                        boxList[i].position.y -= speed;
-                        await Task.Delay(1);
-                    }
-                    boxList[i].position.y = finalY;
+                    boxList = Pallet.regenPallet(boxList,boxDim, palletDim, packType, scene);
                 }
             }
         }

@@ -2,12 +2,18 @@ using BABYLON;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using m = System.Math;
 
 namespace EventHorizon.Blazor.BabylonJS.Data;
 
-public class generatePallet
+public class Pallet
 {
+    public decimal animH {get; set;}
+    public decimal speed { get; set;}
+    public decimal finalY { get; set;}
+    public int index { get; set; }
+
     static public List<Mesh> generateBoxList(decimal[] boxDimensions, decimal[] palletDimensions, bool packType, Scene scene) 
     {
         //generate pallet
@@ -26,7 +32,6 @@ public class generatePallet
 
         double[] item = { bWidth, bLength, bHeight };
         double[] space = { dubPalX, dubPalY, dubPalZ };
-
         double[] itemF = { bLength, bWidth, bHeight };
 
         List<rectPos> positions = new List<rectPos>();
@@ -75,7 +80,7 @@ public class generatePallet
                     boxList.Last().enableEdgesRendering();
                     boxList.Last().edgesWidth = 1.0m;
                     boxList.Last().edgesColor = new Color4(0, 0, 0, 1);
-                    boxList.Last().setEnabled(true);
+                    boxList.Last().setEnabled(false);
 
                 }
             }
@@ -105,7 +110,7 @@ public class generatePallet
                     boxList.Last().enableEdgesRendering();
                     boxList.Last().edgesWidth = 1.0m;
                     boxList.Last().edgesColor = new Color4(0, 0, 0, 1);
-                    boxList.Last().setEnabled(true);
+                    boxList.Last().setEnabled(false);
 
                 }
             }
@@ -121,5 +126,38 @@ public class generatePallet
         return boxList;
     }
 
+    private bool checkForNewLayer(List<Mesh> boxList)
+    {
+        bool newLayer = false;
+        if(boxList[index].position.y != finalY)
+        {
+            newLayer = true;
+        }
+        return newLayer;
+    }
 
+    internal async Task<List<Mesh>> addNextBox(List<Mesh> boxList)
+    {
+        //animate
+        finalY = boxList[index].position.y;
+        boxList[index].position.y = animH;
+        boxList[index].setEnabled(true);
+        while ((boxList[index].position.y > finalY))
+        {
+            boxList[index].position.y -= speed;
+            await Task.Delay(1);
+        }
+        boxList[index].position.y = finalY;
+        index++;
+        return boxList;
+    }
+
+    internal async Task<List<Mesh>> addNextLayer(List<Mesh> boxList)
+    {
+        while (checkForNewLayer(boxList) == false)
+        {
+            boxList = await addNextBox(boxList);
+        }
+        return boxList;
+    }
 }
