@@ -127,13 +127,23 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             nextLayer.background = "green";
 
             Button resetButton = Button.CreateSimpleButton("resetButton", "Reset");
-            resetButton.top = "225px";
+            resetButton.top = "200px";
             resetButton.left = "200px";
             resetButton.width = "150px";
             resetButton.height = "40px";
             resetButton.color = "white";
             resetButton.cornerRadius = 20;
             resetButton.background = "green";
+
+            Button fillPallet = Button.CreateSimpleButton("fillPallet", "Fill Pallet");
+            fillPallet.top = "250px";
+            fillPallet.left = "200px";
+            fillPallet.width = "150px";
+            fillPallet.height = "40px";
+            fillPallet.color = "white";
+            fillPallet.cornerRadius = 20;
+            fillPallet.background = "green";
+
 
             Button nextBox = Button.CreateSimpleButton("nextBox", "Next Box");
             nextBox.top = "200px";
@@ -166,6 +176,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             advancedTexture.addControl(nextBox);
             advancedTexture.addControl(lastBox);
             advancedTexture.addControl(lastLayer);
+            advancedTexture.addControl(fillPallet);
 
             Pallet.speed = 0.08m;
             Pallet.animH = (palY + palSelfY + 1.5m);
@@ -173,6 +184,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
 
             for (Pallet.index = 0; Pallet.index < boxList.Count; Pallet.index++)
             {
+                buttonClick = new TaskCompletionSource<bool>();
                 //On Click of 'Next Box'
                 nextBox.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
@@ -201,6 +213,11 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 lastLayer.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
                     boxList = await Pallet.removeLastLayer(boxList);
+                });
+
+                fillPallet.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
+                {
+                    boxList = await Pallet.fillPallet(boxList);
                 });
 
                 await buttonClick?.Task;

@@ -81,7 +81,6 @@ public class Pallet
                     boxList.Last().edgesWidth = 1.0m;
                     boxList.Last().edgesColor = new Color4(0, 0, 0, 1);
                     boxList.Last().setEnabled(false);
-
                 }
             }
             else
@@ -126,12 +125,16 @@ public class Pallet
         return boxList;
     }
 
-    private bool checkForNewLayer(List<Mesh> boxList)
+    private bool checkForNewLayerContextual(List<Mesh> boxList, bool forwards)
     {
         bool newLayer = false;
-        if(boxList[index].position.y != finalY)
+        if(forwards == true)
         {
-            newLayer = true;
+            if(boxList[index].position.y != boxList[index - 1].position.y & index > 1) { newLayer = true; }
+        }
+        else
+        {
+            if(boxList[index].position.y != boxList[index + 1].position.y) { newLayer = true; }
         }
         return newLayer;
     }
@@ -155,7 +158,7 @@ public class Pallet
     internal async Task<List<Mesh>> addNextLayer(List<Mesh> boxList)
     {
         speed = 0.16m;
-        while (checkForNewLayer(boxList) == false)
+        while (checkForNewLayerContextual(boxList, true) == false)
         {
             boxList = await addNextBox(boxList);
         }
@@ -179,10 +182,17 @@ public class Pallet
 
     internal async Task<List<Mesh>> removeLastLayer(List<Mesh> boxList)
     {
-        while (checkForNewLayer(boxList) == false)
+        while (checkForNewLayerContextual(boxList, false) == false)
         {
             boxList = await removeLastBox(boxList);
         }
+        return boxList;
+    }
+
+    internal async Task<List<Mesh>> fillPallet(List<Mesh> boxList)
+    {
+        foreach (Mesh box in boxList) { box.setEnabled(true); }
+
         return boxList;
     }
 }

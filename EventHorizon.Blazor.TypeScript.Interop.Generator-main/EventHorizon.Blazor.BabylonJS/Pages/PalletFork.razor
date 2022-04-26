@@ -64,7 +64,6 @@
     TaskCompletionSource<bool> buttonClick = new TaskCompletionSource<bool>();
     private async void SubmitEventHandler(EditContext context)
     {
-        
         if (context.Validate())
         {
             formSubmit?.TrySetResult(true);
