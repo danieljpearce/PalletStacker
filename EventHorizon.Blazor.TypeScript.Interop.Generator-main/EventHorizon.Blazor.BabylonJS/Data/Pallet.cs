@@ -154,9 +154,34 @@ public class Pallet
 
     internal async Task<List<Mesh>> addNextLayer(List<Mesh> boxList)
     {
+        speed = 0.16m;
         while (checkForNewLayer(boxList) == false)
         {
             boxList = await addNextBox(boxList);
+        }
+        speed = 0.08m;
+        return boxList;
+    }
+
+    internal async Task<List<Mesh>> reset(List<Mesh> boxList)
+    {
+        foreach (Mesh box in boxList) { box.setEnabled(false); }
+        index = 0;
+        return boxList;
+    }
+
+    internal async Task<List<Mesh>> removeLastBox(List<Mesh> boxList)
+    {
+        boxList[index-1].setEnabled(false);
+        index--;
+        return boxList; 
+    }
+
+    internal async Task<List<Mesh>> removeLastLayer(List<Mesh> boxList)
+    {
+        while (checkForNewLayer(boxList) == false)
+        {
+            boxList = await removeLastBox(boxList);
         }
         return boxList;
     }

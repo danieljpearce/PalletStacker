@@ -87,6 +87,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 new Vector3(palX / 2, palZ / 2, palY / 2),
                 scene
             );
+
             camera.lowerRadiusLimit = 2;
             camera.upperRadiusLimit = 10;
             camera.inertia = 0.5m;
@@ -166,7 +167,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             advancedTexture.addControl(lastBox);
             advancedTexture.addControl(lastLayer);
 
-            Pallet.speed = 0.06m;
+            Pallet.speed = 0.08m;
             Pallet.animH = (palY + palSelfY + 1.5m);
             Pallet.finalY = boxList[0].position.y;
 
@@ -187,21 +188,22 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 //On Click of 'resetButton'
                 resetButton.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
-                
+                    boxList = await Pallet.reset(boxList);
                 });
 
                 //On Click of 'lastBox'
                 lastBox.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
-               
+                    boxList = await Pallet.removeLastBox(boxList);
                 });
 
                 //On Click of 'lastLayer'
                 lastLayer.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
-                 
+                    boxList = await Pallet.removeLastLayer(boxList);
                 });
 
+                await buttonClick?.Task;
 
                 if(regen == true)
                 {
