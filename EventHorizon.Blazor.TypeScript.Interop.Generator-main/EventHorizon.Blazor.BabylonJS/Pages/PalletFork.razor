@@ -25,7 +25,12 @@
                     <div class="col-md-2">
                         <label for="Staircase Algo">Staircase Algo</label>
                         <input type="checkbox" class="form-control" id="useStaircase" @bind-value="@boxDimensions.useStaircase"/>
-                        <ValidationMessage For="@(()=>boxDimensions.boxZ)" />
+                        <ValidationMessage For="@(()=>boxDimensions.useStaircase)" />
+                    </div>
+                    <div class="col-md-2">
+                        <label for="Draw all boxes">Draw all boxes</label>
+                        <input type="checkbox" class="form-control" id="useStaircase" @bind-value="@boxDimensions.drawAll"/>
+                        <ValidationMessage For="@(()=>boxDimensions.drawAll)" />
                     </div>
                     <button type="submit" class="btn btn-info" Style="margin-top:10px">Generate Pallet</button>
         

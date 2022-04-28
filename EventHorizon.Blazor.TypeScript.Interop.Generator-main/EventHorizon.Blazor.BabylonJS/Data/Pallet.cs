@@ -2,6 +2,7 @@ using BABYLON;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using m = System.Math;
 
@@ -13,8 +14,12 @@ public class Pallet
     public decimal speed { get; set;}
     public decimal finalY { get; set;}
     public int index { get; set; }
+    public decimal[] boxDimensions { get; set; }
+    public decimal[] palletDimensions { get; set; }
+    public bool packType { get; set; }
+    public Scene scene  { get; set; }
 
-    static public List<Mesh> generateBoxList(decimal[] boxDimensions, decimal[] palletDimensions, bool packType, Scene scene) 
+    static public List<Mesh> generateBoxList(decimal[] boxDimensions, decimal[] palletDimensions, bool packType, bool drawAll, Scene scene) 
     {
         //generate pallet
         var red = new Color4(1, 0, 0, 1);
@@ -76,11 +81,14 @@ public class Pallet
                                                         Convert.ToDecimal(positions[k].startPos[2] + (height / 2)) + palSelfY + layerHeight,
                                                         Convert.ToDecimal(positions[k].startPos[1] + (depth / 2)));
 
-
                     boxList.Last().enableEdgesRendering();
                     boxList.Last().edgesWidth = 1.0m;
                     boxList.Last().edgesColor = new Color4(0, 0, 0, 1);
-                    boxList.Last().setEnabled(false);
+                    if (drawAll == true)
+                    {
+                        boxList.Last().setEnabled(true);
+                    }
+                    else { boxList.Last().setEnabled(false); }
                 }
             }
             else
@@ -109,7 +117,12 @@ public class Pallet
                     boxList.Last().enableEdgesRendering();
                     boxList.Last().edgesWidth = 1.0m;
                     boxList.Last().edgesColor = new Color4(0, 0, 0, 1);
-                    boxList.Last().setEnabled(false);
+                    if(drawAll == true)
+                    {
+                        boxList.Last().setEnabled(true);
+                    }
+                    else { boxList.Last().setEnabled(false); }
+                    
 
                 }
             }
@@ -118,26 +131,27 @@ public class Pallet
         return boxList;
     }
 
-    static public List<Mesh> regenPallet(List<Mesh> boxList, decimal[] boxDimensions, decimal[] palletDimensions, bool packType, Scene scene)
+    public async Task<List<Mesh>> regenPallet(List<Mesh> boxList, decimal[] boxDimensions, decimal[] palletDimensions, bool packType,bool drawAll, Scene scene)
     {
         foreach (Mesh box in boxList) { box.dispose(); }
-        boxList = generateBoxList(boxDimensions, palletDimensions, packType, scene);
+        boxList = generateBoxList(boxDimensions, palletDimensions, packType,drawAll, scene);
+        index = 0;
         return boxList;
     }
-
-    private bool checkForNewLayerContextual(List<Mesh> boxList, bool forwards)
+    
+    private bool checkForNewLayer(List<Mesh> boxList)
     {
-        bool newLayer = false;
-        if(forwards == true)
+        if (index <= 1)
         {
-            if(boxList[index].position.y != boxList[index - 1].position.y & index > 1) { newLayer = true; }
+            return false;
         }
-        else
+        if (boxList[index].position.y > boxList[index - 1].position.y)
         {
-            if(boxList[index].position.y != boxList[index + 1].position.y) { newLayer = true; }
+            return true;
         }
-        return newLayer;
+        return false;
     }
+
 
     internal async Task<List<Mesh>> addNextBox(List<Mesh> boxList)
     {
@@ -158,9 +172,20 @@ public class Pallet
     internal async Task<List<Mesh>> addNextLayer(List<Mesh> boxList)
     {
         speed = 0.16m;
-        while (checkForNewLayerContextual(boxList, true) == false)
+        if(checkForNewLayer(boxList) == true)
         {
             boxList = await addNextBox(boxList);
+            while (checkForNewLayer(boxList) == false)
+            {
+                boxList = await addNextBox(boxList);
+            }
+        }
+        else
+        {
+            while(checkForNewLayer(boxList) == false)
+            {
+                boxList = await addNextBox(boxList);
+            }
         }
         speed = 0.08m;
         return boxList;
@@ -182,17 +207,29 @@ public class Pallet
 
     internal async Task<List<Mesh>> removeLastLayer(List<Mesh> boxList)
     {
-        while (checkForNewLayerContextual(boxList, false) == false)
+        if(checkForNewLayer(boxList) == true)
         {
             boxList = await removeLastBox(boxList);
+            while (checkForNewLayer(boxList) == false)
+            {
+                boxList = await removeLastBox(boxList);
+            }
         }
+        else 
+        {
+            while (checkForNewLayer(boxList) == false)
+            {
+                boxList = await removeLastBox(boxList);
+            }
+        }
+      
         return boxList;
     }
 
     internal async Task<List<Mesh>> fillPallet(List<Mesh> boxList)
     {
         foreach (Mesh box in boxList) { box.setEnabled(true); }
-
+        index = boxList.Count;
         return boxList;
     }
 }

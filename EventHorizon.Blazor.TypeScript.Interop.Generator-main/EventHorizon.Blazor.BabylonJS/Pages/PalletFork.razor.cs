@@ -109,11 +109,13 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
 
             await formSubmit.Task;
 
-            decimal[] boxDim = { boxDimensions.boxX, boxDimensions.boxZ, boxDimensions.boxY };
+            decimal[] boxDim = { boxDimensions.boxX, boxDimensions.boxY, boxDimensions.boxZ };
             decimal[] palletDim = { palX, palY, palZ, palSelfY };
             bool packType = boxDimensions.useStaircase;
+            bool drawAll =  boxDimensions.drawAll;
 
-            List<Mesh> boxList = Pallet.generateBoxList(boxDim, palletDim, packType, scene);
+
+            List<Mesh> boxList = Pallet.generateBoxList(boxDim, palletDim, packType, drawAll, scene);
 
             var advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
             //var selection = new BABYLON.GUI.SelectionPanel("sp"); why doesnt this exist???????????
@@ -200,7 +202,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 //On Click of 'resetButton'
                 resetButton.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
-                    boxList = await Pallet.reset(boxList);
+                    boxList = await Pallet.regenPallet(boxList, boxDim, palletDim, packType, drawAll,scene);
                 });
 
                 //On Click of 'lastBox'
@@ -224,9 +226,9 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
 
                 if(regen == true)
                 {
-                    boxDim = new[] { boxDimensions.boxX, boxDimensions.boxZ, boxDimensions.boxY };
+                    boxDim = new[] { boxDimensions.boxX, boxDimensions.boxY, boxDimensions.boxZ };
                     packType = boxDimensions.useStaircase;
-                    boxList = Pallet.regenPallet(boxList,boxDim, palletDim, packType, scene);
+                    boxList = await Pallet.regenPallet(boxList,boxDim, palletDim, packType, drawAll, scene);
                 }
             }
         }
