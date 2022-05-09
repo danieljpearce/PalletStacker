@@ -19,12 +19,13 @@ public class Pallet
     public bool packType { get; set; }
     public Scene scene  { get; set; }
 
+    /*
     static public List<Mesh> generateBoxList(decimal[] boxDimensions, decimal[] palletDimensions, bool packType, bool drawAll, Scene scene) 
     {
         //generate pallet
-        var red = new Color4(1, 0, 0, 1);
-        var blue = new Color4(0, 0, 1, 1);
-        var green = new Color4(0, 1, 0, 1);
+        var yellow = new Color4(1m, 1, 0, 0);
+        var red = new Color4(0.658m, 0, 0, 0);
+        var green = new Color4(0, 0.658m, 0, 0);
 
         double bWidth = Convert.ToDouble(boxDimensions[0]);
         double bHeight = Convert.ToDouble(boxDimensions[1]);
@@ -74,7 +75,7 @@ public class Pallet
                                     width = width,
                                     height = height,
                                     depth = depth,
-                                    faceColors = new[] { green, green, green, green, blue, red }
+                                    faceColors = new[] { yellow, yellow, yellow, yellow, green, red }
                                 }, scene));
 
                     boxList.Last().position = new Vector3(Convert.ToDecimal(positions[k].startPos[0] + (width / 2)),
@@ -106,7 +107,7 @@ public class Pallet
                                     width = width,
                                     height = height,
                                     depth = depth,
-                                    faceColors = new[] { green, green, green, green, blue, red }
+                                    faceColors = new[] { yellow, yellow, yellow, yellow, green, red }
                                 }, scene));
 
                     boxList.Last().position = new Vector3(Convert.ToDecimal(positionsF[k].startPos[0] + (width / 2)),
@@ -130,11 +131,73 @@ public class Pallet
         }
         return boxList;
     }
+    */
+    static public List<Mesh> generateMultiBoxList(decimal[,] boxDimensions, decimal[] palletDimensions, bool drawAll, Scene scene) 
+    {
+        List<Mesh> boxList = new List<Mesh>();
+        //generate pallet
+        var yellow = new Color4(1m, 1, 0, 0);
+        var red = new Color4(0.658m, 0, 0, 0);
+        var green = new Color4(0, 0.658m, 0, 0);
+        var palSelfY = palletDimensions[3];
 
-    public async Task<List<Mesh>> regenPallet(List<Mesh> boxList, decimal[] boxDimensions, decimal[] palletDimensions, bool packType,bool drawAll, Scene scene)
+        List<rectPos> positions = new List<rectPos>();
+
+        positions = multiItem.Pack(boxDimensions, palletDimensions);
+
+        for (int k = 0; k < positions.Count; k++)
+        {
+            decimal width = positions[k].endPos[0] - positions[k].startPos[0];
+            decimal height = positions[k].endPos[2] - positions[k].startPos[2];
+            decimal depth = positions[k].endPos[1] - positions[k].startPos[1];
+
+            boxList.Add(MeshBuilder.CreateBox($"box",
+                        new
+                        {
+                            width = width,
+                            height = height,
+                            depth = depth,
+                            faceColors = new[] { yellow, yellow, yellow, yellow, green, red }
+                        }, scene));
+
+            boxList.Last().position = new Vector3((positions[k].startPos[0] + (width / 2)),
+                                                (positions[k].startPos[2] + (height / 2)) + palSelfY,
+                                                (positions[k].startPos[1] + (depth / 2)));
+
+            boxList.Last().enableEdgesRendering();
+            boxList.Last().edgesWidth = 1.0m;
+            boxList.Last().edgesColor = new Color4(0, 0, 0, 1);
+            if (drawAll == true)
+            {
+                boxList.Last().setEnabled(true);
+            }
+            else { boxList.Last().setEnabled(false); }
+        }
+
+                    boxList.Last().enableEdgesRendering();
+                    boxList.Last().edgesWidth = 1.0m;
+                    boxList.Last().edgesColor = new Color4(0, 0, 0, 1);
+                    if (drawAll == true)
+                    {
+                        boxList.Last().setEnabled(true);
+                    }
+                    else { boxList.Last().setEnabled(false); }
+
+        return boxList;
+    }
+    
+         
+     
+
+
+
+      
+  
+
+    public async Task<List<Mesh>> regenPallet(List<Mesh> boxList, decimal[,] boxDimensions, decimal[] palletDimensions, bool packType,bool drawAll, Scene scene)
     {
         foreach (Mesh box in boxList) { box.dispose(); }
-        boxList = generateBoxList(boxDimensions, palletDimensions, packType,drawAll, scene);
+        boxList = generateMultiBoxList(boxDimensions, palletDimensions,drawAll, scene);
         index = 0;
         return boxList;
     }

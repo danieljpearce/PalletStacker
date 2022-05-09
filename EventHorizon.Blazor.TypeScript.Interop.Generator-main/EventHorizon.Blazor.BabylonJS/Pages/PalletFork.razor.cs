@@ -109,13 +109,14 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
 
             await formSubmit.Task;
 
-            decimal[] boxDim = { boxDimensions.boxX, boxDimensions.boxY, boxDimensions.boxZ };
+            decimal[,] boxDim = {{ boxDimensions.boxX / 2, boxDimensions.boxY/2, boxDimensions.boxZ/2, 6 },
+                               { boxDimensions.boxX, boxDimensions.boxY, boxDimensions.boxZ, 10 } };
             decimal[] palletDim = { palX, palY, palZ, palSelfY };
             bool packType = boxDimensions.useStaircase;
             bool drawAll =  boxDimensions.drawAll;
 
 
-            List<Mesh> boxList = Pallet.generateBoxList(boxDim, palletDim, packType, drawAll, scene);
+            List<Mesh> boxList = Pallet.generateMultiBoxList(boxDim, palletDim,drawAll, scene);
 
             var advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
             //var selection = new BABYLON.GUI.SelectionPanel("sp"); why doesnt this exist???????????
@@ -226,7 +227,8 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
 
                 if(regen == true)
                 {
-                    boxDim = new[] { boxDimensions.boxX, boxDimensions.boxY, boxDimensions.boxZ };
+                    boxDim = new decimal[,]{{ boxDimensions.boxX / 2, boxDimensions.boxY/2, boxDimensions.boxZ/2, 6 },
+                                            { boxDimensions.boxX, boxDimensions.boxY, boxDimensions.boxZ, 10 }};
                     packType = boxDimensions.useStaircase;
                     boxList = await Pallet.regenPallet(boxList,boxDim, palletDim, packType, drawAll, scene);
                 }
