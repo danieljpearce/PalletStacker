@@ -18,6 +18,7 @@ public class Pallet
     public decimal[] palletDimensions { get; set; }
     public bool packType { get; set; }
     public Scene scene  { get; set; }
+    //Console.WriteLine('Dan Is GAy')
 
     /*
     static public List<Mesh> generateBoxList(decimal[] boxDimensions, decimal[] palletDimensions, bool packType, bool drawAll, Scene scene) 
@@ -132,7 +133,7 @@ public class Pallet
         return boxList;
     }
     */
-    static public List<Mesh> generateMultiBoxList(decimal[,] boxDimensions, decimal[] palletDimensions, bool drawAll, Scene scene) 
+    static public List<Mesh> generateMultiBoxList(List<item> items, decimal[] palletDimensions, bool drawAll, Scene scene) 
     {
         List<Mesh> boxList = new List<Mesh>();
         //generate pallet
@@ -140,16 +141,17 @@ public class Pallet
         var red = new Color4(0.658m, 0, 0, 0);
         var green = new Color4(0, 0.658m, 0, 0);
         var palSelfY = palletDimensions[3];
+       //Console.WriteLine('Dan Is GAy');
 
-        List<rectPos> positions = new List<rectPos>();
+        List<rectPos> positions;
 
-        positions = multiItem.Pack(boxDimensions, palletDimensions);
+        positions = multiItem.Pack(items, palletDimensions);
 
         for (int k = 0; k < positions.Count; k++)
         {
             decimal width = positions[k].endPos[0] - positions[k].startPos[0];
-            decimal height = positions[k].endPos[2] - positions[k].startPos[2];
-            decimal depth = positions[k].endPos[1] - positions[k].startPos[1];
+            decimal height = positions[k].endPos[1] - positions[k].startPos[1];
+            decimal depth = positions[k].endPos[2] - positions[k].startPos[2];
 
             boxList.Add(MeshBuilder.CreateBox($"box",
                         new
@@ -161,8 +163,8 @@ public class Pallet
                         }, scene));
 
             boxList.Last().position = new Vector3((positions[k].startPos[0] + (width / 2)),
-                                                (positions[k].startPos[2] + (height / 2)) + palSelfY,
-                                                (positions[k].startPos[1] + (depth / 2)));
+                                                (positions[k].startPos[1] + (height / 2)) + palSelfY,
+                                                (positions[k].startPos[2] + (depth / 2)));
 
             boxList.Last().enableEdgesRendering();
             boxList.Last().edgesWidth = 1.0m;
@@ -186,18 +188,12 @@ public class Pallet
         return boxList;
     }
     
-         
-     
 
 
-
-      
-  
-
-    public async Task<List<Mesh>> regenPallet(List<Mesh> boxList, decimal[,] boxDimensions, decimal[] palletDimensions, bool packType,bool drawAll, Scene scene)
+    public async Task<List<Mesh>> regenPallet(List<Mesh> boxList, List<item> items, decimal[] palletDimensions, bool packType,bool drawAll, Scene scene)
     {
         foreach (Mesh box in boxList) { box.dispose(); }
-        boxList = generateMultiBoxList(boxDimensions, palletDimensions,drawAll, scene);
+        boxList = generateMultiBoxList(items, palletDimensions,drawAll, scene);
         index = 0;
         return boxList;
     }
@@ -260,7 +256,7 @@ public class Pallet
         index = 0;
         return boxList;
     }
-
+    //Console.WriteLine('Dan Is super GAy')
     internal async Task<List<Mesh>> removeLastBox(List<Mesh> boxList)
     {
         boxList[index-1].setEnabled(false);

@@ -75,6 +75,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             )).ToEntity<SceneLoaderImportMeshEntity>();
             palletModel.meshes[0].name = "pallet";
 
+
             Pallet Pallet = new Pallet();
 
             decimal palX = 1.2m, palZ = 1m, palY = 1m, palSelfY = .16m;//Pallet dimensions
@@ -109,14 +110,20 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
 
             await formSubmit.Task;
 
-            decimal[,] boxDim = {{ boxDimensions.boxX / 2, boxDimensions.boxY/2, boxDimensions.boxZ/2, 6 },
-                               { boxDimensions.boxX, boxDimensions.boxY, boxDimensions.boxZ, 10 } };
+            List<item> items = new List<item>();
+
+            items.Add(new item() { X = 0.1m, Y = 0.12m, Z = 0.13m, quantity = 40 });
+            
+            decimal[,] boxDim = {{ 0.34m,  0.12m, 0.23m, 40 },
+                                 { 0.15m, 0.23m, 0.05m, 6 },
+                                 { 0.17m, 0.09m, 0.12m, 20 }};
+
             decimal[] palletDim = { palX, palY, palZ, palSelfY };
             bool packType = boxDimensions.useStaircase;
             bool drawAll =  boxDimensions.drawAll;
 
 
-            List<Mesh> boxList = Pallet.generateMultiBoxList(boxDim, palletDim,drawAll, scene);
+            List<Mesh> boxList = Pallet.generateMultiBoxList(items, palletDim,drawAll, scene);
 
             var advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
             //var selection = new BABYLON.GUI.SelectionPanel("sp"); why doesnt this exist???????????
@@ -203,7 +210,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 //On Click of 'resetButton'
                 resetButton.onPointerClickObservable.add(async (Vector2WithInfo arg1, EventState state) =>
                 {
-                    boxList = await Pallet.regenPallet(boxList, boxDim, palletDim, packType, drawAll,scene);
+                    boxList = await Pallet.regenPallet(boxList, items, palletDim, packType, drawAll,scene);
                 });
 
                 //On Click of 'lastBox'
@@ -230,7 +237,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                     boxDim = new decimal[,]{{ boxDimensions.boxX / 2, boxDimensions.boxY/2, boxDimensions.boxZ/2, 6 },
                                             { boxDimensions.boxX, boxDimensions.boxY, boxDimensions.boxZ, 10 }};
                     packType = boxDimensions.useStaircase;
-                    boxList = await Pallet.regenPallet(boxList,boxDim, palletDim, packType, drawAll, scene);
+                    boxList = await Pallet.regenPallet(boxList,items, palletDim, packType, drawAll, scene);
                 }
             }
         }
