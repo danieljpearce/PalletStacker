@@ -112,8 +112,9 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
 
             List<item> items = new List<item>();
 
-            items.Add(new item() { X = 0.1m, Y = 0.12m, Z = 0.13m, quantity = 40 });
-            
+            items.Add(new item() { X = 0.1m, Y = 0.12m, Z = 0.13m});
+            items.Add(new item() { X = 0.2m, Y = 0.12m, Z = 0.15m });
+
             decimal[,] boxDim = {{ 0.34m,  0.12m, 0.23m, 40 },
                                  { 0.15m, 0.23m, 0.05m, 6 },
                                  { 0.17m, 0.09m, 0.12m, 20 }};

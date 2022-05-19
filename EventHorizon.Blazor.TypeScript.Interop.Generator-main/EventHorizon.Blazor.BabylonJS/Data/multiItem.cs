@@ -9,44 +9,96 @@ namespace EventHorizon.Blazor.BabylonJS.Data
         //items takes tuples of 4 elements [X,Y,Z , Quantity] 
         //space takes one tuple for the area of the bounding box
 
+        public static decimal[] origin = { 0, 0, 0 };
+        public static decimal[] spaceArea = { 1, 1, 1.2m };
+        public static decimal[] bestCorner = origin;
+
+        static List<rectPos> retValues = new List<rectPos>();
+        static List<decimal[]> corners = new List<decimal[]>() { new decimal[] {0,0,0},
+                                                                new decimal[] {spaceArea[0], 0, 0},
+                                                                new decimal[] {0, 0, spaceArea[2]},
+                                                                new decimal[] {spaceArea[0], 0, spaceArea[2] } };
+
+
         public static List<rectPos> Pack(List<item> items, decimal[] space)
         {
             List<rectPos> retValues = new List<rectPos>();
-            List<decimal[]> corners = new List<decimal[]>() { new decimal[] {0,0,0},
-                                                              new decimal[] {space[0], 0, 0},
-                                                              new decimal[] {0, 0, space[2]},
-                                                              new decimal[] {space[0], 0, space[2] } };
-            decimal[] startPos = { 0, 0, 0 }; 
+         
+
+            spaceArea = space;
+
+
             for (int i = 0; i < items.Count; i++)//for each item
             {
                 for (int k = 0; k < 6; k++)//for each orientation
                 {
                     for (int j = 0; j < corners.Count; j++)//for each corner
                     {
-                        if (fitsInCorner(corners,items[i]))
+                        if (fitsInCorner(corners, items[i])[0])
                         {
-                            //need better system for box coordinates + way to check if existing boxes block a corner 
-                            retValues.Add(new rectPos()
+                            if (fitsInCorner(corners, items[i])[1])
                             {
-                                startPos = new decimal[] { startPos[0], startPos[1], startPos[2] },
-                                endPos = new decimal[] { startPos[0] + items[i].X, startPos[1] + items[i].Y, startPos[2] + items[i].Z }
-                            });
-                            startPos[0] += items[i].X;
+                                retValues.Add(new rectPos()
+                                {
+                                    startPos = new decimal[] { bestCorner[0] - items[i].X, bestCorner[1] - items[i].Y, bestCorner[2] - items[i].Z },
+                                    endPos = new decimal[] { bestCorner[0], bestCorner[1], bestCorner[2] }
+                                });
+                            }
+                            else
+                            {
+                                retValues.Add(new rectPos()
+                                {
+                                    startPos = new decimal[] { bestCorner[0], bestCorner[1], bestCorner[2] },
+                                    endPos = new decimal[] { bestCorner[0] + items[i].X, bestCorner[1] + items[i].Y, bestCorner[2] + items[i].Z }
+                                });
+                            }
+                            updateCorners(items[i]);
+                            //update corner list
+                            //need  way to check if existing boxes block a corner 
                         }
                     }
-                }   
+                }
             }
+
             return retValues;
 
         }
-        public static bool fitsInCorner(List<decimal[]> corners, item item)
+
+        public static bool[] fitsInCorner(List<decimal[]> corners, item item)
         {
+            bool[] fits = { false, false };
+            foreach (decimal[] corner in corners)
+            {
+                if (corner[0] + item.X < spaceArea[0] && corner[1] + item.Y < spaceArea[1] && corner[2] + item.Z < spaceArea[2])
+                {
+                    bestCorner = corner;
+                    fits[0] = true;
+                }
+                else if (corner[0] - item.X > origin[0] && corner[1] + item.Y > origin[1] && item.Z + item.Z < origin[2])
+                {
+                    bestCorner = corner;
+                    fits[0] = true;
+                    fits[1] = true;
+                }
+
+            }
             //consider already placed boxes using their vertices 
-            bool fits = false;
+
             return fits;
+        }
+        public static void updateCorners(item item)
+        {
+
+            foreach (rectPos rectPos in retValues)
+            {
+                //check for corners with other boxes 
+            }
+
+            corners.Add(new decimal[] { bestCorner[0] + item.X, bestCorner[1], bestCorner[2] });
+            corners.Add(new decimal[] { bestCorner[0], bestCorner[1], bestCorner[2] + item.Z });
+            corners.Remove(bestCorner);
+
         }
     }
 
-   
 }
-

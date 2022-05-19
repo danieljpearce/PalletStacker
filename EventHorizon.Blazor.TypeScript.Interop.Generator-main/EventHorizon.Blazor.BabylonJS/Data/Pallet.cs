@@ -141,10 +141,9 @@ public class Pallet
         var red = new Color4(0.658m, 0, 0, 0);
         var green = new Color4(0, 0.658m, 0, 0);
         var palSelfY = palletDimensions[3];
-       //Console.WriteLine('Dan Is GAy');
 
         List<rectPos> positions;
-
+     
         positions = multiItem.Pack(items, palletDimensions);
 
         for (int k = 0; k < positions.Count; k++)
