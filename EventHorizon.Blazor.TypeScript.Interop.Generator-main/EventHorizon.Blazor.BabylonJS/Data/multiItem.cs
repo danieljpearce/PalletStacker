@@ -10,7 +10,7 @@ namespace EventHorizon.Blazor.BabylonJS.Data
         //space takes one tuple for the area of the bounding box
 
         public static decimal[] origin = { 0, 0, 0 };
-        public static decimal[] spaceArea = { 1, 1, 1.2m };
+        public static decimal[] spaceArea = { 1.2m, 1, 1 };
         public static decimal[] bestCorner = origin;
 
         static List<rectPos> retValues = new List<rectPos>();
@@ -30,8 +30,14 @@ namespace EventHorizon.Blazor.BabylonJS.Data
 
             for (int i = 0; i < items.Count; i++)//for each item
             {
+
                 for (int k = 0; k < 6; k++)//for each orientation
                 {
+
+                    items[i].X = items[i].orientations[k, 0];
+                    items[i].Y = items[i].orientations[k, 1];
+                    items[i].Z = items[i].orientations[k, 2];
+                    
                     for (int j = 0; j < corners.Count; j++)//for each corner
                     {
                         if (fitsInCorner(corners, items[i])[0])
@@ -52,7 +58,7 @@ namespace EventHorizon.Blazor.BabylonJS.Data
                                     endPos = new decimal[] { bestCorner[0] + items[i].X, bestCorner[1] + items[i].Y, bestCorner[2] + items[i].Z }
                                 });
                             }
-                            updateCorners(items[i]);
+                            //updateCorners(items[i]);
                             //update corner list
                             //need  way to check if existing boxes block a corner 
                         }
@@ -88,7 +94,7 @@ namespace EventHorizon.Blazor.BabylonJS.Data
         }
         public static void updateCorners(item item)
         {
-
+            
             foreach (rectPos rectPos in retValues)
             {
                 //check for corners with other boxes 
