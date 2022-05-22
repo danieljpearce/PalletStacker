@@ -13,6 +13,13 @@ namespace EventHorizon.Blazor.BabylonJS.Data
         public static decimal[] spaceArea = { 1.2m, 1, 1 };
         public static decimal[] bestCorner = origin;
 
+        public static int[,] orientationMatrix = { { 0, 1, 2 },
+                                                    { 0, 2, 1 },
+                                                    { 1, 0, 2 },
+                                                    { 1, 2, 0 },
+                                                    { 2, 0, 1 },
+                                                    { 2, 1, 0 }};
+
         static List<rectPos> retValues = new List<rectPos>();
         static List<decimal[]> corners = new List<decimal[]>() { new decimal[] {0,0,0},
                                                                 new decimal[] {spaceArea[0], 0, 0},
@@ -34,10 +41,11 @@ namespace EventHorizon.Blazor.BabylonJS.Data
                 for (int k = 0; k < 6; k++)//for each orientation
                 {
 
-                    items[i].X = items[i].orientations[k, 0];
-                    items[i].Y = items[i].orientations[k, 1];
-                    items[i].Z = items[i].orientations[k, 2];
-                    
+                    decimal[,] orientations = getOrientations(items[i], k);
+                    items[i].X = orientations[k, 0];
+                    items[i].Y = orientations[k, 1];
+                    items[i].Z = orientations[k, 2];
+
                     for (int j = 0; j < corners.Count; j++)//for each corner
                     {
                         if (fitsInCorner(corners, items[i])[0])
@@ -104,6 +112,20 @@ namespace EventHorizon.Blazor.BabylonJS.Data
             corners.Add(new decimal[] { bestCorner[0], bestCorner[1], bestCorner[2] + item.Z });
             corners.Remove(bestCorner);
 
+        }
+
+        public static decimal[,] getOrientations(item item, int index)
+        {
+            decimal[,] orientations = new decimal[6, 3];
+
+            for(int i = 0; i < 6; i++)
+            {
+                orientations[i, orientationMatrix[i, 0]] = item.X;
+                orientations[i, orientationMatrix[i, 1]] = item.Y;
+                orientations[i, orientationMatrix[i, 2]] = item.Z;
+            }
+
+            return orientations;
         }
     }
 

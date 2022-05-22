@@ -15,7 +15,6 @@ namespace EventHorizon.Blazor.BabylonJS.Data
         public item()
         {
 
-            X = 0;
           
            orientations = new decimal[,]  { { X, Y, Z }, 
                                             { X, Z, Y }, 
