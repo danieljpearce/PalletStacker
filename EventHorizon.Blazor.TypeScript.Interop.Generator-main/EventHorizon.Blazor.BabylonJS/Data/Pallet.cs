@@ -5,6 +5,11 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using m = System.Math;
+using System.IO;
+using System.Reflection;
+using System.Net;
+using EventHorizon.Blazor.BabylonJS.Data.EBAFIT;
+
 
 namespace EventHorizon.Blazor.BabylonJS.Data;
 
@@ -18,6 +23,8 @@ public class Pallet
     public decimal[] palletDimensions { get; set; }
     public bool packType { get; set; }
     public Scene scene  { get; set; }
+
+
     //Console.WriteLine('Dan Is GAy')
 
     /*
@@ -133,19 +140,19 @@ public class Pallet
         return boxList;
     }
     */
-    static public List<Mesh> generateMultiBoxList(List<item> items, decimal[] palletDimensions, bool drawAll, Scene scene) 
+    static public List<Mesh> generateMultiBoxList(List<inputItem> items, decimal[] palletDimensions, bool drawAll, Scene scene) 
     {
         List<Mesh> boxList = new List<Mesh>();
         //generate pallet
-        var yellow = new Color4(1m, 1, 0, 0);
+        var yellow = new Color4(1m, 1, 0, 1);
         var red = new Color4(0.658m, 0, 0, 0);
         var green = new Color4(0, 0.658m, 0, 0);
         var palSelfY = palletDimensions[3];
 
-        List<rectPos> positions;
+        List<rectPos> positions = new List<rectPos>();
      
-        positions = multiItem.Pack(items, palletDimensions);
-
+  
+        
         for (int k = 0; k < positions.Count; k++)
         {
             decimal width = positions[k].endPos[0] - positions[k].startPos[0];
@@ -189,7 +196,7 @@ public class Pallet
     
 
 
-    public async Task<List<Mesh>> regenPallet(List<Mesh> boxList, List<item> items, decimal[] palletDimensions, bool packType,bool drawAll, Scene scene)
+    public async Task<List<Mesh>> regenPallet(List<Mesh> boxList, List<inputItem> items, decimal[] palletDimensions, bool packType,bool drawAll, Scene scene)
     {
         foreach (Mesh box in boxList) { box.dispose(); }
         boxList = generateMultiBoxList(items, palletDimensions,drawAll, scene);
@@ -290,4 +297,93 @@ public class Pallet
         index = boxList.Count;
         return boxList;
     }
+
+
+
+    static public List<Mesh> packFromRectPos(List<rectPos> positions, decimal[] palletDimensions, Scene scene)
+    {
+        List<Mesh> boxList = new List<Mesh>();
+        //generate pallet
+        var yellow = new Color4(0, 0, 1m, 0);
+        var red = new Color4(1m, 0, 0, 0);
+        var green = new Color4(0, 1m, 0, 0);
+        var palSelfY = palletDimensions[3];
+
+
+        for (int k = 0; k < positions.Count; k++)
+        {
+            decimal width = positions[k].endPos[0] - positions[k].startPos[0];
+            decimal height = positions[k].endPos[1] - positions[k].startPos[1];
+            decimal depth = positions[k].endPos[2] - positions[k].startPos[2];
+
+            boxList.Add(MeshBuilder.CreateBox($"box",
+                        new
+                        {
+                            width = width,
+                            height = height,
+                            depth = depth,
+                            faceColors = new[] { yellow, yellow, yellow, yellow, green, red }
+                        }, scene));
+
+            boxList.Last().position = new Vector3((positions[k].startPos[0] + (width / 2)),
+                                                (positions[k].startPos[1] + (height / 2)) + palSelfY,
+                                                (positions[k].startPos[2] + (depth / 2)));
+
+            boxList.Last().enableEdgesRendering();
+            boxList.Last().edgesWidth = 25.0m;
+            boxList.Last().edgesColor = new Color4(0, 0, 0, 1);
+        
+        }
+
+
+        return boxList;
+    }
+
+
+    static public List<Mesh> packFromEBAFIT(AlgorithmPackingResult packResult, Scene scene)
+    {
+        List<Mesh> boxList = new List<Mesh>();
+        var palSelfY = 0.16m;
+        var yellow = new Color4(0, 0, 1m, 0);
+        var red = new Color4(1m, 0, 0, 0);
+        var green = new Color4(0, 1m, 0, 0);
+
+        foreach (Item item in packResult.PackedItems)
+        {
+            boxList.Add(MeshBuilder.CreateBox($"box",
+                 new
+                 {
+                     width = item.PackDimX,
+                     height = item.PackDimY,
+                     depth = item.PackDimZ,
+                     faceColors = new[] { yellow, yellow, yellow, yellow, green, red }
+                 }, scene));
+
+            boxList.Last().position = new Vector3(item.CoordZ,
+                                                (item.CoordY + palSelfY),
+                                                item.CoordX);
+
+            boxList.Last().enableEdgesRendering();
+            boxList.Last().edgesWidth = 1.0m;
+            boxList.Last().edgesColor = new Color4(0, 0, 0, 1);
+
+        }
+        return boxList;
+    }
+
+    public List<inputItem> debugPack()
+    {
+        List<inputItem> inputItems = new List<inputItem>();
+
+      /*
+       inputItems.Add(new inputItem(0, 0.12m, 0.09m , 0.06m, 12));
+       inputItems.Add(new inputItem(0, 0.15m, 0.03m , 0.03m, 12));
+       inputItems.Add(new inputItem(0, 0.12m, 0.14m , 0.16m, 12));
+       inputItems.Add(new inputItem(0, 0.04m, 0.09m , 0.05m, 12));
+       inputItems.Add(new inputItem(0, 0.10m, 0.09m , 0.06m, 12));
+        */
+
+        return inputItems;
+    }
+
 }

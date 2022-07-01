@@ -9,6 +9,7 @@ using BABYLON;
 using BABYLON.GUI;
 using EventHorizon.Blazor.BabylonJS.Model;
 using EventHorizon.Blazor.BabylonJS.Data;
+using EventHorizon.Blazor.BabylonJS.Data.EBAFIT;
 using EventHorizon.Blazor.Interop;
 using EventHorizon.Blazor.Interop;
 using EventHorizon.Blazor.Interop.Callbacks;
@@ -24,13 +25,14 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
     using System.Net.Http;
     using System.Runtime.Serialization.Formatters.Binary;
     using Microsoft.AspNetCore.Components.Forms;
+    using System.Reflection;
 
     public partial class PalletFork : IDisposable
     {
         private Engine _engine;
         private Scene _scene;
 
-
+       
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
@@ -66,7 +68,6 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             );
 
             //Load the pallet 
-
             var palletModel = (await SceneLoader.ImportMeshAsync(
                 "",
                 "http://localhost:5000/assets/",
@@ -75,10 +76,13 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             )).ToEntity<SceneLoaderImportMeshEntity>();
             palletModel.meshes[0].name = "pallet";
 
+          
 
             Pallet Pallet = new Pallet();
 
             decimal palX = 1.2m, palZ = 1m, palY = 1m, palSelfY = .16m;//Pallet dimensions
+
+            
             //add an arcRotateCamera to the scene
             var camera = new ArcRotateCamera(
                 "camera",
@@ -108,23 +112,37 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 () => Task.Run(() => _scene.render(true, false))
             ));
 
-            await formSubmit.Task;
+            decimal[] palDims = { palX, palY, palZ };
+            List<inputItem> items = new List<inputItem>();
 
-            List<item> items = new List<item>();
+            items.Add(new inputItem()
+            {
+                index = 0,
+                width = 0.1m,
+                height = 0.2m,
+                length = 0.36m,
+                quantity = 32
+            }); 
+            
+            EBAFIT ebafit = new EBAFIT();
+            Data.EBAFIT.Container container = new Data.EBAFIT.Container(0, palDims[0], palDims[1], palDims[2]);
+            AlgorithmPackingResult packResult = ebafit.Pack(items,container);
 
-            items.Add(new item() { X = 0.1m, Y = 0.12m, Z = 0.13m});
-            items.Add(new item() { X = 0.2m, Y = 0.12m, Z = 0.15m });
+            List<Mesh> boxList = Pallet.packFromEBAFIT(packResult, scene);
 
-            decimal[,] boxDim = {{ 0.34m,  0.12m, 0.23m, 40 },
-                                 { 0.15m, 0.23m, 0.05m, 6 },
-                                 { 0.17m, 0.09m, 0.12m, 20 }};
+            
+
+           // await formSubmit.Task; wait for form to be submitted
+
 
             decimal[] palletDim = { palX, palY, palZ, palSelfY };
             bool packType = boxDimensions.useStaircase;
             bool drawAll =  boxDimensions.drawAll;
 
 
-            List<Mesh> boxList = Pallet.generateMultiBoxList(items, palletDim,drawAll, scene);
+            //List<Mesh> boxList = Pallet.packFromRectPos(positions, palletDim, scene);
+
+           
 
             var advancedTexture = AdvancedDynamicTexture.CreateFullscreenUI("UI");
             //var selection = new BABYLON.GUI.SelectionPanel("sp"); why doesnt this exist???????????
@@ -154,7 +172,6 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             fillPallet.color = "white";
             fillPallet.cornerRadius = 20;
             fillPallet.background = "green";
-
 
             Button nextBox = Button.CreateSimpleButton("nextBox", "Next Box");
             nextBox.top = "200px";
@@ -235,16 +252,43 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
 
                 if(regen == true)
                 {
-                    boxDim = new decimal[,]{{ boxDimensions.boxX / 2, boxDimensions.boxY/2, boxDimensions.boxZ/2, 6 },
-                                            { boxDimensions.boxX, boxDimensions.boxY, boxDimensions.boxZ, 10 }};
+                    //boxDim = new decimal[,]{{ boxDimensions.boxX / 2, boxDimensions.boxY/2, boxDimensions.boxZ/2, 6 },
+                                           // { boxDimensions.boxX, boxDimensions.boxY, boxDimensions.boxZ, 10 }};
                     packType = boxDimensions.useStaircase;
                     boxList = await Pallet.regenPallet(boxList,items, palletDim, packType, drawAll, scene);
                 }
             }
         }
 
-   
+       
 
+        public static async Task<List<inputItem>> packFromFile(Scene scene)
+        {
+            List<inputItem> items = new List<inputItem>();
+            System.Net.Http.HttpClient httpClient = new System.Net.Http.HttpClient();
+            using (var s = await httpClient.GetStreamAsync("http://localhost:5000/assets/benchmarkData3.txt"))
+            {
+                string fullText = new StreamReader(s).ReadToEnd();
+                var problem1 = fullText.Split(",");
+                string[] lines = problem1[0].Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    /*
+                    string[] values = lines[i].Split(" ");
+                    items.Add(new inputItem()
+                    {
+                        index = Convert.ToInt32(values[0]),
+                        width = Convert.ToDecimal(values[1]),
+                        height = Convert.ToDecimal(values[2]),
+                        length = Convert.ToDecimal(values[3]),
+                        quantity = Convert.ToInt32(values[4])
+                    });
+                    */
+                }
+            }
+            return items;
+        }
         public string ___guid { get; set; }
     }
 
