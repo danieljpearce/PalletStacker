@@ -67,6 +67,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 1
             );
 
+            
             //Load the pallet 
             var palletModel = (await SceneLoader.ImportMeshAsync(
                 "",
@@ -75,7 +76,7 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
                 scene
             )).ToEntity<SceneLoaderImportMeshEntity>();
             palletModel.meshes[0].name = "pallet";
-
+            
           
 
             Pallet Pallet = new Pallet();
@@ -113,17 +114,22 @@ namespace EventHorizon.Blazor.BabylonJS.Pages
             ));
 
             decimal[] palDims = { palX, palY, palZ };
-            List<inputItem> items = new List<inputItem>();
+            List<Item> items = new List<Item>();
+            Random r = new Random();
 
-            items.Add(new inputItem()
+            double upperbound = 0.35;
+            double lowerbound = 0.1;
+           
+            for (int i = 0; i < 5; i++)
             {
-                index = 0,
-                width = 0.1m,
-                height = 0.2m,
-                length = 0.36m,
-                quantity = 32
-            }); 
-            
+                decimal dim1 = Convert.ToDecimal(r.NextDouble() * (upperbound - lowerbound) + lowerbound);
+                decimal dim2 = Convert.ToDecimal(r.NextDouble() * (upperbound - lowerbound) + lowerbound);
+                decimal dim3 = Convert.ToDecimal(r.NextDouble() * (upperbound - lowerbound) + lowerbound);
+                items.Add(new Item(i,dim1,dim2,dim3,r.Next(25)));
+            }
+ 
+
+
             EBAFIT ebafit = new EBAFIT();
             Data.EBAFIT.Container container = new Data.EBAFIT.Container(0, palDims[0], palDims[1], palDims[2]);
             AlgorithmPackingResult packResult = ebafit.Pack(items,container);

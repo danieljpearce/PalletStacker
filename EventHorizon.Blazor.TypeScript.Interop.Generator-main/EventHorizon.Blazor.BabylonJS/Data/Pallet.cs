@@ -140,7 +140,7 @@ public class Pallet
         return boxList;
     }
     */
-    static public List<Mesh> generateMultiBoxList(List<inputItem> items, decimal[] palletDimensions, bool drawAll, Scene scene) 
+    static public List<Mesh> generateMultiBoxList(List<Item> items, decimal[] palletDimensions, bool drawAll, Scene scene) 
     {
         List<Mesh> boxList = new List<Mesh>();
         //generate pallet
@@ -196,7 +196,7 @@ public class Pallet
     
 
 
-    public async Task<List<Mesh>> regenPallet(List<Mesh> boxList, List<inputItem> items, decimal[] palletDimensions, bool packType,bool drawAll, Scene scene)
+    public async Task<List<Mesh>> regenPallet(List<Mesh> boxList, List<Item> items, decimal[] palletDimensions, bool packType,bool drawAll, Scene scene)
     {
         foreach (Mesh box in boxList) { box.dispose(); }
         boxList = generateMultiBoxList(items, palletDimensions,drawAll, scene);
@@ -359,9 +359,9 @@ public class Pallet
                      faceColors = new[] { yellow, yellow, yellow, yellow, green, red }
                  }, scene));
 
-            boxList.Last().position = new Vector3(item.CoordZ,
-                                                (item.CoordY + palSelfY),
-                                                item.CoordX);
+            boxList.Last().position = new Vector3(item.CoordX + (item.PackDimX/2),
+                                                  item.CoordY + (item.PackDimY/2) + palSelfY,
+                                                  item.CoordZ + (item.PackDimZ/2));
 
             boxList.Last().enableEdgesRendering();
             boxList.Last().edgesWidth = 1.0m;

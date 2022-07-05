@@ -69,7 +69,7 @@ namespace EventHorizon.Blazor.BabylonJS.Data.EBAFIT
         #endregion Private Variables
 
         #region Pack
-        public AlgorithmPackingResult Pack(List<inputItem> items, Container container)
+        public AlgorithmPackingResult Pack(List<Item> items, Container container)
         {
 			AlgorithmPackingResult result = new AlgorithmPackingResult();
 			Initialize(container, items);
@@ -511,53 +511,53 @@ namespace EventHorizon.Blazor.BabylonJS.Data.EBAFIT
 		/// <summary>
 		/// Initializes everything.
 		/// </summary>
-		private void Initialize(Container container, List<inputItem> items)
-		{
-			itemsToPack = new List<Item>();
-			itemsPackedInOrder = new List<Item>();
-			result = new ContainerPackingResult();
+		private void Initialize(Container container, List<Item> items)
+        {
+            itemsToPack = new List<Item>();
+            itemsPackedInOrder = new List<Item>();
+            result = new ContainerPackingResult();
 
-			// The original code uses 1-based indexing everywhere. This fake entry is added to the beginning
-			// of the list to make that possible.
-			itemsToPack.Add(new Item(0, 0, 0, 0, 0));
+            // The original code uses 1-based indexing everywhere. This fake entry is added to the beginning
+            // of the list to make that possible.
+            itemsToPack.Add(new Item(0, 0, 0, 0, 0));
 
-			layers = new List<Layer>();
-			itemsToPackCount = 0;
+            layers = new List<Layer>();
+            itemsToPackCount = 0;
 
-			foreach (inputItem item in items)
-			{
-				for (int i = 1; i <= item.quantity; i++)
-				{
-					Item newItem = new Item(item.index, item.width, item.height, item.length, item.quantity);
-					itemsToPack.Add(newItem);
-				}
+            foreach (Item item in items)
+            {
+                for (int i = 1; i <= item.Quantity; i++)
+                {
+                    Item newItem = new Item(item.ID, item.Dim1, item.Dim2, item.Dim3, item.Quantity);
+                    itemsToPack.Add(newItem);
+                }
 
-				itemsToPackCount += item.quantity;
-			}
+                itemsToPackCount += item.Quantity;
+            }
 
-			itemsToPack.Add(new Item(0, 0, 0, 0, 0));
+            itemsToPack.Add(new Item(0, 0, 0, 0, 0));
 
-			totalContainerVolume = container.Length * container.Height * container.Width;
-			totalItemVolume = 0.0M;
+            totalContainerVolume = container.Length * container.Height * container.Width;
+            totalItemVolume = 0.0M;
 
-			for (x = 1; x <= itemsToPackCount; x++)
-			{
-				totalItemVolume = totalItemVolume + itemsToPack[x].Volume;
-			}
+            for (x = 1; x <= itemsToPackCount; x++)
+            {
+                totalItemVolume = totalItemVolume + itemsToPack[x].Volume;
+            }
 
-			scrapfirst = new ScrapPad();
+            scrapfirst = new ScrapPad();
 
-			scrapfirst.Pre = null;
-			scrapfirst.Post = null;
-			packingBest = false;
-			hundredPercentPacked = false;
-			quit = false;
-		}
+            scrapfirst.Pre = null;
+            scrapfirst.Post = null;
+            packingBest = false;
+            hundredPercentPacked = false;
+            quit = false;
+        }
 
-		/// <summary>
-		/// Lists all possible layer heights by giving a weight value to each of them.
-		/// </summary>
-		private void ListCanditLayers()
+        /// <summary>
+        /// Lists all possible layer heights by giving a weight value to each of them.
+        /// </summary>
+        private void ListCanditLayers()
 		{
 			bool same;
 			decimal exdim = 0;
